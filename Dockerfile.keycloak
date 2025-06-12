@@ -35,6 +35,6 @@ EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
   CMD curl -f http://localhost:8080/health/ready || exit 1
 
-# Production modunda başlat
+# Önce build, sonra start
 ENTRYPOINT []
-CMD ["sh", "-c", "/opt/keycloak/bin/kc.sh start --optimized --http-port=$PORT --hostname-strict=false --http-enabled=true --db-url=$KC_DB_URL --db-username=$KC_DB_USERNAME --db-password=$KC_DB_PASSWORD"]
+CMD ["sh", "-c", "/opt/keycloak/bin/kc.sh build && /opt/keycloak/bin/kc.sh start --http-port=$PORT --hostname-strict=false --http-enabled=true --db-url=$KC_DB_URL --db-username=$KC_DB_USERNAME --db-password=$KC_DB_PASSWORD"]
