@@ -1,0 +1,24 @@
+# Keycloak Dockerfile for render.com deployment
+FROM quay.io/keycloak/keycloak:latest
+
+# Copy realm configuration if exists
+# COPY keycloak-realm-export.json /opt/keycloak/data/import/
+
+# Set environment variables for production
+ENV KC_DB=postgres
+ENV KC_FEATURES=preview,scripts,organization
+ENV KC_HOSTNAME_STRICT=false
+ENV KC_HTTP_ENABLED=true
+ENV KC_PROXY=edge
+
+# Security headers for iframe support
+ENV KC_SPI_CONTENT_SECURITY_POLICY_FRAME_ANCESTORS="'self' https://*.onrender.com"
+ENV KC_SPI_X_FRAME_OPTIONS=SAMEORIGIN
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+  CMD curl -f http://localhost:8080/health/ready || exit 1
+
+# Run in production mode
+ENTRYPOINT ["/opt/keycloak/bin/kc.sh"]
+CMD ["start", "--optimized"] 
