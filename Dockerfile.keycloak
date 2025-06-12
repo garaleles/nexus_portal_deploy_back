@@ -1,3 +1,4 @@
+# Keycloak Dockerfile for render.com deployment
 FROM quay.io/keycloak/keycloak:latest
 
 # (Opsiyonel) Realm export dosyan varsa ekle
@@ -36,4 +37,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
 
 # Production modunda başlat
 ENTRYPOINT []
-CMD ["sh", "-c", "/opt/keycloak/bin/kc.sh start --optimized --http-port=$PORT --hostname-strict=false --http-enabled=true --db-url=$KC_DB_URL --db-username=$KC_DB_USERNAME --db-password=$KC_DB_PASSWORD --features=preview,scripts,organization"]
+CMD ["sh", "-c", "/opt/keycloak/bin/kc.sh start --optimized --http-port=$PORT --hostname-strict=false --http-enabled=true --db-url=$KC_DB_URL --db-username=$KC_DB_USERNAME --db-password=$KC_DB_PASSWORD"]
