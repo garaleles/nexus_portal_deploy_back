@@ -16,5 +16,8 @@ EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
   CMD curl -f http://localhost:8080/health/ready || exit 1
 
+
 ENTRYPOINT []
+ENV KEYCLOAK_ADMIN=admin
+ENV KEYCLOAK_ADMIN_PASSWORD=admin
 CMD ["sh", "-c", "/opt/keycloak/bin/kc.sh start-dev --http-port=$PORT --hostname-strict=false"]
