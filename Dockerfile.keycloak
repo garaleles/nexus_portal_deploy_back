@@ -19,7 +19,6 @@ ENV KEYCLOAK_ADMIN_PASSWORD=admin
 
 # Port binding için önemli ayarlar
 ENV KC_HTTP_RELATIVE_PATH=/auth
-ENV KC_HOSTNAME_STRICT_HTTPS=false
 ENV KC_HOSTNAME_STRICT=false
 ENV KC_HTTP_ENABLED=true
 ENV KC_PROXY=edge
@@ -31,4 +30,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
 
 # Tek komutla başlat ve port binding'i zorla
 ENTRYPOINT []
-CMD ["sh", "-c", "/opt/keycloak/bin/kc.sh start-dev --http-port=$PORT --hostname-strict=false --http-enabled=true --db=postgres --features=preview,scripts,organization --http-relative-path=/auth --hostname-strict-https=false --hostname-strict=false --http-enabled=true --proxy=edge"]
+CMD ["sh", "-c", "/opt/keycloak/bin/kc.sh start-dev --http-port=$PORT --hostname-strict=false --http-enabled=true --db=postgres --features=preview,scripts,organization --http-relative-path=/auth --proxy=edge"]
