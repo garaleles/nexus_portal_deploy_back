@@ -24,6 +24,11 @@ ENV KC_HTTP_ENABLED=true
 ENV KC_HOSTNAME_STRICT=false
 ENV KC_HOSTNAME_STRICT_HTTPS=false
 
+# Veritabanı ayarları
+ENV KC_DB_URL=jdbc:postgresql://dpg-d15ebjnfte5s7394fjhg-a/business_portal_man_db_ja2o
+ENV KC_DB_USERNAME=business_portal_man_db_ja2o_user
+ENV KC_DB_PASSWORD=h9L7KJokhPgWEvtnO6R4VIslSdGjGDiH
+
 EXPOSE 8080
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
@@ -31,4 +36,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
 
 # Production modunda başlat
 ENTRYPOINT []
-CMD ["sh", "-c", "/opt/keycloak/bin/kc.sh start --optimized --http-port=$PORT --hostname-strict=false --http-enabled=true --db=postgres --features=preview,scripts,organization"]
+CMD ["sh", "-c", "/opt/keycloak/bin/kc.sh start --optimized --http-port=$PORT --hostname-strict=false --http-enabled=true --db-url=$KC_DB_URL --db-username=$KC_DB_USERNAME --db-password=$KC_DB_PASSWORD --features=preview,scripts,organization"]
