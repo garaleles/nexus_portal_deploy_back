@@ -15,6 +15,9 @@ ENV KC_PROXY=edge
 ENV KC_SPI_CONTENT_SECURITY_POLICY_FRAME_ANCESTORS="'self' https://*.onrender.com"
 ENV KC_SPI_X_FRAME_OPTIONS=SAMEORIGIN
 
+# Build Keycloak first (required for optimized mode)
+RUN /opt/keycloak/bin/kc.sh build
+
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
   CMD curl -f http://localhost:8080/health/ready || exit 1
