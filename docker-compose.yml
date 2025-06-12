@@ -1,0 +1,104 @@
+version: '3.8'
+
+services:
+  # PostgreSQL servisi - Business Portal ana veritabanı
+  postgres:
+    image: postgres:15
+    container_name: business_portal_postgres
+    restart: always
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: business_portal_man_db
+      POSTGRES_HOST_AUTH_METHOD: trust
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - business_portal_network
+
+  # pgAdmin - PostgreSQL yönetim arayüzü
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: business_portal_pgadmin
+    restart: always
+    ports:
+      - "5050:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@business-portal.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    depends_on:
+      - postgres
+    networks:
+      - business_portal_network
+
+  # Keycloak - Kimlik doğrulama ve yetkilendirme servisi
+  keycloak:
+    image: quay.io/keycloak/keycloak:latest
+    container_name: business_portal_keycloak
+    ports:
+      - "8080:8080" # Ana NestJS uygulamasıyla çakışmaması için dikkat edin
+    environment:
+      KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN_USER:-admin}
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin}
+      KC_FEATURES: preview,scripts,organization
+      # Development ortamı için gerekli ayarlar
+      KC_HOSTNAME_STRICT: "false"
+      KC_HTTP_ENABLED: "true"
+      # CSP ayarları - iframe için
+      KC_SPI_CONTENT_SECURITY_POLICY_FRAME_ANCESTORS: "'self' http://localhost:4200 https://localhost:4200"
+      KC_SPI_X_FRAME_OPTIONS: "SAMEORIGIN"
+    volumes:
+      - keycloak_data:/opt/keycloak/data
+    command:
+      - start-dev
+    restart: unless-stopped
+    networks:
+      - business_portal_network
+      
+  # Redis - Önbellek, oturum yönetimi ve kuyruk işleme için
+  redis:
+    image: redis:7-alpine
+    container_name: business_portal_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-redis_password}
+    restart: unless-stopped
+    networks:
+      - business_portal_network
+      
+  # RedisInsight - Redis yönetim arayüzü (isteğe bağlı)
+  redisinsight:
+    image: redislabs/redisinsight:latest
+    container_name: business_portal_redisinsight
+    ports:
+      - "8001:8001"
+    restart: unless-stopped
+    volumes:
+      - redisinsight_data:/db
+    networks:
+      - business_portal_network
+
+networks:
+  business_portal_network:
+    driver: bridge
+
+volumes:
+  # PostgreSQL ve yönetim arayüzü verileri
+  postgres_data:
+  pgadmin_data:
+  # Keycloak verileri
+  keycloak_data:
+  # Redis ve yönetim arayüzü verileri
+  redis_data:
+  redisinsight_data:
