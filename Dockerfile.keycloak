@@ -22,4 +22,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
 
 # Admin kullanıcısını oluştur ve Keycloak'ı başlat
 ENTRYPOINT []
-CMD ["sh", "-c", "/opt/keycloak/bin/kc.sh bootstrap --user $KEYCLOAK_ADMIN --password $KEYCLOAK_ADMIN_PASSWORD && /opt/keycloak/bin/kc.sh start-dev --http-port=$PORT --hostname-strict=false"]
+CMD ["sh", "-c", "/opt/keycloak/bin/kc.sh bootstrap-admin --user $KEYCLOAK_ADMIN --password $KEYCLOAK_ADMIN_PASSWORD && /opt/keycloak/bin/kc.sh start-dev --http-port=$PORT --hostname-strict=false"]
