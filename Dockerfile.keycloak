@@ -1,25 +1,20 @@
-# Keycloak Dockerfile for render.com deployment
 FROM quay.io/keycloak/keycloak:latest
 
 # (Opsiyonel) Realm export dosyan varsa ekle
 # COPY keycloak-realm-export.json /opt/keycloak/data/import/
 
-# Veritabanı ve diğer temel ayarlar
 ENV KC_DB=postgres
 ENV KC_FEATURES=preview,scripts,organization
 ENV KC_HOSTNAME_STRICT=false
 ENV KC_HTTP_ENABLED=true
 
-# Güvenlik başlıkları (iframe için)
 ENV KC_SPI_CONTENT_SECURITY_POLICY_FRAME_ANCESTORS="'self' https://*.onrender.com"
 ENV KC_SPI_X_FRAME_OPTIONS=SAMEORIGIN
 
-# Portu expose et (dokümantasyon amaçlı, kritik değil)
 EXPOSE 8080
 
-# Health check (port burada sabit, istersen dinamikleştirebilirsin)
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
   CMD curl -f http://localhost:8080/health/ready || exit 1
 
-# Giriş noktası: Bash ile başlat ki $PORT değişkeni çözülsün!
-CMD bash -c "/opt/keycloak/bin/kc.sh start-dev --http-port=$PORT --hostname-strict=false"
+ENTRYPOINT []
+CMD ["sh", "-c", "/opt/keycloak/bin/kc.sh start-dev --http-port=$PORT --hostname-strict=false"]
