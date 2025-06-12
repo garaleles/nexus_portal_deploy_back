@@ -24,4 +24,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
 
 # Run in development mode (easier for first setup)
 ENTRYPOINT ["/opt/keycloak/bin/kc.sh"]
-CMD ["start-dev"] 
+CMD ["start-dev", "--http-port=8080", "--hostname-strict=false"] 
