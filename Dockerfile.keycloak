@@ -10,13 +10,16 @@ ENV KC_HTTP_ENABLED=true
 
 ENV KC_SPI_CONTENT_SECURITY_POLICY_FRAME_ANCESTORS="'self' https://*.onrender.com"
 ENV KC_SPI_X_FRAME_OPTIONS=SAMEORIGIN
+
+# Admin kullanıcısı için environment değişkenleri
 ENV KEYCLOAK_ADMIN=admin
 ENV KEYCLOAK_ADMIN_PASSWORD=admin
-EXPOSE $PORT
+
+EXPOSE 8080
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
   CMD curl -f http://localhost:8080/health/ready || exit 1
 
-
+# Admin kullanıcısını oluştur ve Keycloak'ı başlat
 ENTRYPOINT []
-CMD ["sh", "-c", "/opt/keycloak/bin/kc.sh start-dev --http-port=$PORT --hostname-strict=false"]
+CMD ["sh", "-c", "/opt/keycloak/bin/kc.sh bootstrap --user $KEYCLOAK_ADMIN --password $KEYCLOAK_ADMIN_PASSWORD && /opt/keycloak/bin/kc.sh start-dev --http-port=$PORT --hostname-strict=false"]
