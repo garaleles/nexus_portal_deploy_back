@@ -42,7 +42,7 @@ COPY --from=builder --chown=nestjs:nodejs /app/dist ./dist
 USER nestjs
 
 # Expose port
-EXPOSE 8080
+EXPOSE 3000
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
@@ -50,4 +50,4 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
 
 # Start the application
 ENTRYPOINT ["dumb-init", "--"]
-CMD ["start-dev", "--http-port=${PORT}", "--hostname-strict=false"]
+CMD ["node", "dist/main.js"] 
