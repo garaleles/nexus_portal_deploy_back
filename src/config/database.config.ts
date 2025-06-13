@@ -34,14 +34,17 @@ export default registerAs('database', (): TypeOrmModuleOptions => {
         logging: process.env.NODE_ENV !== 'production',
         logger: 'advanced-console',
         maxQueryExecutionTime: 1000,
-        connectTimeoutMS: 10000,
-        retryAttempts: 10,
-        retryDelay: 3000,
+        connectTimeoutMS: 30000,
+        retryAttempts: 15,
+        retryDelay: 5000,
         keepConnectionAlive: true,
         extra: {
             max: 10,
             ssl: process.env.DB_SSL === 'true'
-                ? { rejectUnauthorized: false }
+                ? {
+                    rejectUnauthorized: false,
+                    sslmode: 'require'
+                }
                 : false,
         },
         autoLoadEntities: true,
