@@ -47,8 +47,12 @@ export default registerAs('database', (): TypeOrmModuleOptions => {
                 idleTimeoutMillis: 5000,
                 connectionTimeoutMillis: 30000,
                 ssl: {
-                    rejectUnauthorized: false
-                }, // SSL'yi Render.com için açtık
+                    rejectUnauthorized: false,
+                    checkServerIdentity: () => undefined,
+                    secureOptions: 0,
+                    requestCert: false,
+                    agent: false
+                }, // SSL'yi Render.com için güçlendirdik
             },
             autoLoadEntities: true,
             applicationName: 'Nexus Business Portal API',
@@ -78,8 +82,12 @@ export default registerAs('database', (): TypeOrmModuleOptions => {
             idleTimeoutMillis: 5000,
             connectionTimeoutMillis: 30000,
             ssl: {
-                rejectUnauthorized: false
-            }, // SSL'yi Render.com için açtık
+                rejectUnauthorized: false,
+                checkServerIdentity: () => undefined,
+                secureOptions: 0,
+                requestCert: false,
+                agent: false
+            }, // SSL'yi Render.com için güçlendirdik
         },
         autoLoadEntities: true,
         applicationName: 'Nexus Business Portal API',
