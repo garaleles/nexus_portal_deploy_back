@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import KcAdminClient from '@keycloak/keycloak-admin-client';
 import UserRepresentation from '@keycloak/keycloak-admin-client/lib/defs/userRepresentation';
 import CredentialRepresentation from '@keycloak/keycloak-admin-client/lib/defs/credentialRepresentation';
+import { RequiredActionAlias } from '@keycloak/keycloak-admin-client/lib/defs/requiredActionProviderRepresentation';
 
 @Injectable()
 export class KeycloakService {
@@ -87,7 +88,7 @@ export class KeycloakService {
         username: user.username || user.email,
         enabled: true,
         emailVerified: false, // E-posta doğrulama gerekli
-        requiredActions: ['verify_email'], // E-posta doğrulama action'ı
+        requiredActions: [RequiredActionAlias.VERIFY_EMAIL], // E-posta doğrulama action'ı
         attributes: {} as Record<string, string[]>
       };
 
@@ -300,7 +301,7 @@ export class KeycloakService {
         lastName: lastName,
         enabled: true,
         emailVerified: false,
-        requiredActions: ['verify_email']
+        requiredActions: [RequiredActionAlias.VERIFY_EMAIL]
       }, password, {
         tenantId: tenantMetadataId,
         tenantName: tenantName,
