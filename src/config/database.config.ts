@@ -28,6 +28,8 @@ export default registerAs('database', (): TypeOrmModuleOptions => {
     if (databaseUrl) {
         logger.log('📡 Using DATABASE_URL for connection...');
         logger.log(`📡 DATABASE_URL: ${databaseUrl.replace(/:[^:@]*@/, ':***@')}`);
+        logger.log(`📡 DATABASE_URL length: ${databaseUrl.length}`);
+        logger.log(`📡 DATABASE_URL starts with: ${databaseUrl.substring(0, 20)}`);
         return {
             type: 'postgres',
             url: databaseUrl,
