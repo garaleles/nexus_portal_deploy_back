@@ -87,7 +87,7 @@ export class KeycloakService {
         username: user.username || user.email,
         enabled: true,
         emailVerified: false, // E-posta doğrulama gerekli
-        requiredActions: ['VERIFY_EMAIL'], // E-posta doğrulama action'ı
+        requiredActions: ['verify_email'], // E-posta doğrulama action'ı
         attributes: {} as Record<string, string[]>
       };
 
@@ -300,7 +300,7 @@ export class KeycloakService {
         lastName: lastName,
         enabled: true,
         emailVerified: false,
-        requiredActions: ['VERIFY_EMAIL']
+        requiredActions: ['verify_email']
       }, password, {
         tenantId: tenantMetadataId,
         tenantName: tenantName,
