@@ -22,6 +22,44 @@ export default registerAs('database', (): TypeOrmModuleOptions => {
 
     logger.log('🔄 Attempting to connect to PostgreSQL database...');
 
+    // DATABASE_URL varsa onu kullan, yoksa ayrı parametreleri kullan
+    const databaseUrl = process.env.DATABASE_URL;
+
+    if (databaseUrl) {
+        logger.log('📡 Using DATABASE_URL for connection...');
+        return {
+            type: 'postgres',
+            url: databaseUrl,
+            entities: [__dirname + '/../**/*.entity{.ts,.js}'],
+            synchronize: process.env.NODE_ENV !== 'production',
+            logging: process.env.NODE_ENV !== 'production',
+            logger: 'advanced-console',
+            maxQueryExecutionTime: 1000,
+            connectTimeoutMS: 60000,
+            retryAttempts: 30,
+            retryDelay: 10000,
+            keepConnectionAlive: true,
+            extra: {
+                max: 5,
+                min: 1,
+                idleTimeoutMillis: 10000,
+                connectionTimeoutMillis: 60000,
+                acquireTimeoutMillis: 60000,
+                ssl: process.env.NODE_ENV === 'production'
+                    ? {
+                        rejectUnauthorized: false,
+                        checkServerIdentity: () => undefined,
+                        sslmode: 'require'
+                    }
+                    : false,
+            },
+            autoLoadEntities: true,
+            applicationName: 'Nexus Business Portal API',
+        };
+    }
+
+    // Fallback: Ayrı parametreler kullan
+    logger.log('📡 Using separate DB parameters for connection...');
     return {
         type: 'postgres',
         host: process.env.DB_HOST || 'localhost',
@@ -34,15 +72,20 @@ export default registerAs('database', (): TypeOrmModuleOptions => {
         logging: process.env.NODE_ENV !== 'production',
         logger: 'advanced-console',
         maxQueryExecutionTime: 1000,
-        connectTimeoutMS: 30000,
-        retryAttempts: 15,
-        retryDelay: 5000,
+        connectTimeoutMS: 60000,
+        retryAttempts: 30,
+        retryDelay: 10000,
         keepConnectionAlive: true,
         extra: {
-            max: 10,
+            max: 5,
+            min: 1,
+            idleTimeoutMillis: 10000,
+            connectionTimeoutMillis: 60000,
+            acquireTimeoutMillis: 60000,
             ssl: process.env.DB_SSL === 'true'
                 ? {
                     rejectUnauthorized: false,
+                    checkServerIdentity: () => undefined,
                     sslmode: 'require'
                 }
                 : false,
