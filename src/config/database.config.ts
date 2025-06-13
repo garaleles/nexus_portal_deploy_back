@@ -22,9 +22,56 @@ export default registerAs('database', (): TypeOrmModuleOptions => {
 
     logger.log('🔄 Attempting to connect to PostgreSQL database...');
 
-    // DATABASE_URL varsa onu kullan, yoksa ayrı parametreleri kullan
-    const databaseUrl = process.env.DATABASE_URL;
+    // Ayrı parametreleri öncelikle kullan
+    const dbHost = process.env.DB_HOST;
+    const dbPort = process.env.DB_PORT;
+    const dbUsername = process.env.DB_USERNAME;
+    const dbPassword = process.env.DB_PASSWORD;
+    const dbDatabase = process.env.DB_DATABASE;
 
+    if (dbHost && dbUsername && dbPassword && dbDatabase) {
+        logger.log('📡 Using separate DB parameters for connection...');
+        logger.log(`📡 DB_HOST: ${dbHost}`);
+        logger.log(`📡 DB_PORT: ${dbPort}`);
+        logger.log(`📡 DB_USERNAME: ${dbUsername}`);
+        logger.log(`📡 DB_DATABASE: ${dbDatabase}`);
+        return {
+            type: 'postgres',
+            host: dbHost,
+            port: parseInt(dbPort || '5432', 10),
+            username: dbUsername,
+            password: dbPassword,
+            database: dbDatabase,
+            entities: [__dirname + '/../**/*.entity{.ts,.js}'],
+            synchronize: process.env.NODE_ENV !== 'production',
+            logging: false,
+            maxQueryExecutionTime: 5000,
+            connectTimeoutMS: 30000,
+            retryAttempts: 5,
+            retryDelay: 3000,
+            keepConnectionAlive: false,
+            extra: {
+                max: 3,
+                min: 0,
+                idleTimeoutMillis: 5000,
+                connectionTimeoutMillis: 30000,
+                ssl: process.env.NODE_ENV === 'production'
+                    ? {
+                        rejectUnauthorized: false,
+                        checkServerIdentity: () => undefined,
+                        secureOptions: 0,
+                        requestCert: false,
+                        agent: false
+                    }
+                    : false,
+            },
+            autoLoadEntities: true,
+            applicationName: 'Nexus Business Portal API',
+        };
+    }
+
+    // Fallback: DATABASE_URL kullan
+    const databaseUrl = process.env.DATABASE_URL;
     if (databaseUrl) {
         logger.log('📡 Using DATABASE_URL for connection...');
         logger.log(`📡 DATABASE_URL: ${databaseUrl.replace(/:[^:@]*@/, ':***@')}`);
@@ -59,35 +106,29 @@ export default registerAs('database', (): TypeOrmModuleOptions => {
         };
     }
 
-    // Fallback: Ayrı parametreler kullan
-    logger.log('📡 Using separate DB parameters for connection...');
+    // Final fallback: localhost
+    logger.log('📡 Using localhost fallback...');
     return {
         type: 'postgres',
-        host: process.env.DB_HOST || 'localhost',
-        port: parseInt(process.env.DB_PORT || '5432', 10),
-        username: process.env.DB_USERNAME || 'postgres',
-        password: process.env.DB_PASSWORD || 'postgres',
-        database: process.env.DB_DATABASE || 'business_portal_man_db',
+        host: 'localhost',
+        port: 5432,
+        username: 'postgres',
+        password: 'postgres',
+        database: 'business_portal_man_db',
         entities: [__dirname + '/../**/*.entity{.ts,.js}'],
         synchronize: process.env.NODE_ENV !== 'production',
-        logging: false, // Logging'i kapat
+        logging: false,
         maxQueryExecutionTime: 5000,
         connectTimeoutMS: 30000,
         retryAttempts: 5,
         retryDelay: 3000,
-        keepConnectionAlive: false, // KeepAlive'i kapat
+        keepConnectionAlive: false,
         extra: {
-            max: 3, // Connection pool'u çok küçük yap
+            max: 3,
             min: 0,
             idleTimeoutMillis: 5000,
             connectionTimeoutMillis: 30000,
-            ssl: {
-                rejectUnauthorized: false,
-                checkServerIdentity: () => undefined,
-                secureOptions: 0,
-                requestCert: false,
-                agent: false
-            }, // SSL'yi Render.com için güçlendirdik
+            ssl: false,
         },
         autoLoadEntities: true,
         applicationName: 'Nexus Business Portal API',
