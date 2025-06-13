@@ -39,8 +39,10 @@ export default registerAs('database', (): TypeOrmModuleOptions => {
         retryDelay: 3000,
         keepConnectionAlive: true,
         extra: {
-            max: 100, // Maksimum bağlantı sayısı
-            ssl: process.env.NODE_ENV === 'production',
+            max: 10,
+            ssl: process.env.DB_SSL === 'true'
+                ? { rejectUnauthorized: false }
+                : false,
         },
         autoLoadEntities: true,
         applicationName: 'Nexus Business Portal API',
