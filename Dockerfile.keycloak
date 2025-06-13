@@ -22,9 +22,8 @@ ENV KC_SPI_X_FRAME_OPTIONS=SAMEORIGIN
 ENV KEYCLOAK_ADMIN=admin
 ENV KEYCLOAK_ADMIN_PASSWORD=admin
 
-# Hostname ve port ayarları (PORT ortam değişkeni Render tarafından atanacak)
+# Hostname ayarları
 ENV KC_HOSTNAME=business-portal-keycloak.onrender.com
-ENV KC_HTTP_PORT=$PORT
 ENV KC_HTTP_ENABLED=true
 ENV KC_HOSTNAME_STRICT=false
 ENV KC_HOSTNAME_STRICT_HTTPS=false
