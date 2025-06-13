@@ -50,21 +50,9 @@ export default registerAs('database', (): TypeOrmModuleOptions => {
             retryAttempts: 5,
             retryDelay: 3000,
             keepConnectionAlive: false,
-            extra: {
-                max: 3,
-                min: 0,
-                idleTimeoutMillis: 5000,
-                connectionTimeoutMillis: 30000,
-                ssl: process.env.NODE_ENV === 'production'
-                    ? {
-                        rejectUnauthorized: false,
-                        checkServerIdentity: () => undefined,
-                        secureOptions: 0,
-                        requestCert: false,
-                        agent: false
-                    }
-                    : false,
-            },
+            ssl: {
+                rejectUnauthorized: false
+            }, // Render.com için basit SSL config
             autoLoadEntities: true,
             applicationName: 'Nexus Business Portal API',
         };
@@ -88,19 +76,9 @@ export default registerAs('database', (): TypeOrmModuleOptions => {
             retryAttempts: 5,
             retryDelay: 3000,
             keepConnectionAlive: false, // KeepAlive'i kapat
-            extra: {
-                max: 3, // Connection pool'u çok küçük yap
-                min: 0,
-                idleTimeoutMillis: 5000,
-                connectionTimeoutMillis: 30000,
-                ssl: {
-                    rejectUnauthorized: false,
-                    checkServerIdentity: () => undefined,
-                    secureOptions: 0,
-                    requestCert: false,
-                    agent: false
-                }, // SSL'yi Render.com için güçlendirdik
-            },
+            ssl: {
+                rejectUnauthorized: false
+            }, // Render.com için basit SSL config
             autoLoadEntities: true,
             applicationName: 'Nexus Business Portal API',
         };
@@ -123,13 +101,9 @@ export default registerAs('database', (): TypeOrmModuleOptions => {
         retryAttempts: 5,
         retryDelay: 3000,
         keepConnectionAlive: false,
-        extra: {
-            max: 3,
-            min: 0,
-            idleTimeoutMillis: 5000,
-            connectionTimeoutMillis: 30000,
-            ssl: false,
-        },
+        ssl: {
+            rejectUnauthorized: false
+        }, // Render.com için basit SSL config
         autoLoadEntities: true,
         applicationName: 'Nexus Business Portal API',
     };
