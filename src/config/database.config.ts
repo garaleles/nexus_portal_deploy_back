@@ -27,31 +27,24 @@ export default registerAs('database', (): TypeOrmModuleOptions => {
 
     if (databaseUrl) {
         logger.log('📡 Using DATABASE_URL for connection...');
+        logger.log(`📡 DATABASE_URL: ${databaseUrl.replace(/:[^:@]*@/, ':***@')}`);
         return {
             type: 'postgres',
             url: databaseUrl,
             entities: [__dirname + '/../**/*.entity{.ts,.js}'],
             synchronize: process.env.NODE_ENV !== 'production',
-            logging: process.env.NODE_ENV !== 'production',
-            logger: 'advanced-console',
-            maxQueryExecutionTime: 1000,
-            connectTimeoutMS: 60000,
-            retryAttempts: 30,
-            retryDelay: 10000,
-            keepConnectionAlive: true,
+            logging: false, // Logging'i kapat
+            maxQueryExecutionTime: 5000,
+            connectTimeoutMS: 30000,
+            retryAttempts: 5,
+            retryDelay: 3000,
+            keepConnectionAlive: false, // KeepAlive'i kapat
             extra: {
-                max: 5,
-                min: 1,
-                idleTimeoutMillis: 10000,
-                connectionTimeoutMillis: 60000,
-                acquireTimeoutMillis: 60000,
-                ssl: process.env.NODE_ENV === 'production'
-                    ? {
-                        rejectUnauthorized: false,
-                        checkServerIdentity: () => undefined,
-                        sslmode: 'require'
-                    }
-                    : false,
+                max: 3, // Connection pool'u çok küçük yap
+                min: 0,
+                idleTimeoutMillis: 5000,
+                connectionTimeoutMillis: 30000,
+                ssl: false, // SSL'yi tamamen kapat
             },
             autoLoadEntities: true,
             applicationName: 'Nexus Business Portal API',
@@ -69,26 +62,18 @@ export default registerAs('database', (): TypeOrmModuleOptions => {
         database: process.env.DB_DATABASE || 'business_portal_man_db',
         entities: [__dirname + '/../**/*.entity{.ts,.js}'],
         synchronize: process.env.NODE_ENV !== 'production',
-        logging: process.env.NODE_ENV !== 'production',
-        logger: 'advanced-console',
-        maxQueryExecutionTime: 1000,
-        connectTimeoutMS: 60000,
-        retryAttempts: 30,
-        retryDelay: 10000,
-        keepConnectionAlive: true,
+        logging: false, // Logging'i kapat
+        maxQueryExecutionTime: 5000,
+        connectTimeoutMS: 30000,
+        retryAttempts: 5,
+        retryDelay: 3000,
+        keepConnectionAlive: false, // KeepAlive'i kapat
         extra: {
-            max: 5,
-            min: 1,
-            idleTimeoutMillis: 10000,
-            connectionTimeoutMillis: 60000,
-            acquireTimeoutMillis: 60000,
-            ssl: process.env.DB_SSL === 'true'
-                ? {
-                    rejectUnauthorized: false,
-                    checkServerIdentity: () => undefined,
-                    sslmode: 'require'
-                }
-                : false,
+            max: 3, // Connection pool'u çok küçük yap
+            min: 0,
+            idleTimeoutMillis: 5000,
+            connectionTimeoutMillis: 30000,
+            ssl: false, // SSL'yi tamamen kapat
         },
         autoLoadEntities: true,
         applicationName: 'Nexus Business Portal API',
