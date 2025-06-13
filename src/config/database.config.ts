@@ -46,7 +46,9 @@ export default registerAs('database', (): TypeOrmModuleOptions => {
                 min: 0,
                 idleTimeoutMillis: 5000,
                 connectionTimeoutMillis: 30000,
-                ssl: false, // SSL'yi tamamen kapat
+                ssl: {
+                    rejectUnauthorized: false
+                }, // SSL'yi Render.com için açtık
             },
             autoLoadEntities: true,
             applicationName: 'Nexus Business Portal API',
@@ -75,7 +77,9 @@ export default registerAs('database', (): TypeOrmModuleOptions => {
             min: 0,
             idleTimeoutMillis: 5000,
             connectionTimeoutMillis: 30000,
-            ssl: false, // SSL'yi tamamen kapat
+            ssl: {
+                rejectUnauthorized: false
+            }, // SSL'yi Render.com için açtık
         },
         autoLoadEntities: true,
         applicationName: 'Nexus Business Portal API',
