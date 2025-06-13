@@ -1,14 +1,15 @@
 # Keycloak Dockerfile for render.com deployment
 FROM quay.io/keycloak/keycloak:latest
 
-# (Opsiyonel) Realm export dosyan varsa ekle
-# COPY keycloak-realm-export.json /opt/keycloak/data/import/
-
 # Temel ayarlar
 ENV KC_DB=postgres
 ENV KC_FEATURES=preview,scripts,organization
 ENV KC_HOSTNAME_STRICT=false
 ENV KC_HTTP_ENABLED=true
+ENV KC_PROXY=edge
+ENV KC_HEALTH_ENABLED=true
+ENV KC_METRICS_ENABLED=true
+ENV KC_LEGACY_OBSERVABILITY_INTERFACE=true
 
 # Güvenlik başlıkları
 ENV KC_SPI_CONTENT_SECURITY_POLICY_FRAME_ANCESTORS="'self' https://*.onrender.com"
@@ -20,7 +21,7 @@ ENV KEYCLOAK_ADMIN_PASSWORD=admin
 
 # Production ayarları
 ENV KC_HOSTNAME=localhost
-ENV KC_HTTP_PORT=8080
+ENV KC_HTTP_PORT=$PORT
 ENV KC_HTTP_ENABLED=true
 ENV KC_HOSTNAME_STRICT=false
 ENV KC_HOSTNAME_STRICT_HTTPS=false
@@ -30,11 +31,12 @@ ENV KC_DB_URL=jdbc:postgresql://dpg-d15ebjnfte5s7394fjhg-a/business_portal_man_d
 ENV KC_DB_USERNAME=business_portal_man_db_ja2o_user
 ENV KC_DB_PASSWORD=h9L7KJokhPgWEvtnO6R4VIslSdGjGDiH
 
-EXPOSE 8080
+# Önce build, sonra start
+RUN /opt/keycloak/bin/kc.sh build
+
+EXPOSE $PORT
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-  CMD curl -f http://localhost:8080/health/ready || exit 1
+  CMD curl -f http://localhost:$PORT/health/ready || exit 1
 
-# Önce build, sonra start
-ENTRYPOINT []
-CMD ["sh", "-c", "/opt/keycloak/bin/kc.sh build && /opt/keycloak/bin/kc.sh start --http-port=$PORT --hostname-strict=false --http-enabled=true --db-url=$KC_DB_URL --db-username=$KC_DB_USERNAME --db-password=$KC_DB_PASSWORD"]
+ENTRYPOINT ["/opt/keycloak/bin/kc.sh", "start"]
