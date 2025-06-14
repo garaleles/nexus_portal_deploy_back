@@ -22,7 +22,54 @@ export default registerAs('database', (): TypeOrmModuleOptions => {
 
     logger.log('🔄 Attempting to connect to PostgreSQL database...');
 
-    // Ayrı parametreleri öncelikle kullan
+    // Render.com için Internal Database URL kullanımı (makale önerisi)
+    const databaseUrl = process.env.DATABASE_URL;
+
+    if (databaseUrl) {
+        logger.log('📡 Using DATABASE_URL (Internal) for connection...');
+        logger.log(`📡 DATABASE_URL: ${databaseUrl.replace(/:[^:@]*@/, ':***@')}`);
+
+        return {
+            type: 'postgres',
+            url: databaseUrl,
+            entities: [__dirname + '/../**/*.entity{.ts,.js}'],
+            synchronize: process.env.NODE_ENV !== 'production',
+            logging: false,
+
+            // Render.com için başlangıç retry stratejisi
+            retryAttempts: 10,
+            retryDelay: 3000,
+
+            // Render.com için SSL yapılandırması (makale kritik önerisi)
+            ssl: {
+                rejectUnauthorized: false  // Render'ın internal CA için gerekli
+            },
+
+            // Render.com için proactive connection pool management
+            extra: {
+                // Connection Pool Ayarları (Makale Tablo 2)
+                max: 20,                    // Veritabanı planına göre ayarla
+                min: 0,                     // Kaynak tasarrufu için
+                idleTimeoutMillis: 60000,   // 1 dakika - network'ün kesmesinden önce pool temizlesin
+                connectionTimeoutMillis: 10000,  // 10 saniye bağlantı timeout
+                acquireTimeoutMillis: 10000,     // Pool'dan bağlantı alma timeout
+
+                // Render network için ek ayarlar
+                statement_timeout: 60000,         // 60 saniye query timeout
+                query_timeout: 60000,            // 60 saniye query timeout
+                application_name: 'Nexus Business Portal API',
+
+                // Keep-alive ayarları (zombi bağlantıları önler)
+                keepAlive: true,
+                keepAliveInitialDelayMillis: 0
+            },
+
+            autoLoadEntities: true,
+            maxQueryExecutionTime: 60000,  // 60 saniye max query time
+        };
+    }
+
+    // Fallback: Ayrı parametreler (Internal URL preferred)
     const dbHost = process.env.DB_HOST;
     const dbPort = process.env.DB_PORT;
     const dbUsername = process.env.DB_USERNAME;
@@ -32,9 +79,7 @@ export default registerAs('database', (): TypeOrmModuleOptions => {
     if (dbHost && dbUsername && dbPassword && dbDatabase) {
         logger.log('📡 Using separate DB parameters for connection...');
         logger.log(`📡 DB_HOST: ${dbHost}`);
-        logger.log(`📡 DB_PORT: ${dbPort}`);
-        logger.log(`📡 DB_USERNAME: ${dbUsername}`);
-        logger.log(`📡 DB_DATABASE: ${dbDatabase}`);
+
         return {
             type: 'postgres',
             host: dbHost,
@@ -45,66 +90,36 @@ export default registerAs('database', (): TypeOrmModuleOptions => {
             entities: [__dirname + '/../**/*.entity{.ts,.js}'],
             synchronize: process.env.NODE_ENV !== 'production',
             logging: false,
-            maxQueryExecutionTime: 5000,
-            connectTimeoutMS: 30000,
-            retryAttempts: 5,
+
+            // Render.com için başlangıç retry stratejisi
+            retryAttempts: 10,
             retryDelay: 3000,
-            keepConnectionAlive: false,
+
+            // Render.com için SSL yapılandırması
             ssl: {
                 rejectUnauthorized: false
-            }, // Render.com için basit SSL config
+            },
+
+            // Render.com için connection pool
+            extra: {
+                max: 20,
+                min: 0,
+                idleTimeoutMillis: 60000,
+                connectionTimeoutMillis: 10000,
+                acquireTimeoutMillis: 10000,
+                statement_timeout: 60000,
+                query_timeout: 60000,
+                application_name: 'Nexus Business Portal API',
+                keepAlive: true,
+                keepAliveInitialDelayMillis: 0
+            },
+
             autoLoadEntities: true,
-            applicationName: 'Nexus Business Portal API',
+            maxQueryExecutionTime: 60000,
         };
     }
 
-    // Fallback: DATABASE_URL kullan
-    const databaseUrl = process.env.DATABASE_URL;
-    if (databaseUrl) {
-        logger.log('📡 Using DATABASE_URL for connection...');
-        logger.log(`📡 DATABASE_URL: ${databaseUrl.replace(/:[^:@]*@/, ':***@')}`);
-        logger.log(`📡 DATABASE_URL length: ${databaseUrl.length}`);
-        logger.log(`📡 DATABASE_URL starts with: ${databaseUrl.substring(0, 20)}`);
-        return {
-            type: 'postgres',
-            url: databaseUrl,
-            entities: [__dirname + '/../**/*.entity{.ts,.js}'],
-            synchronize: process.env.NODE_ENV !== 'production',
-            logging: false, // Logging'i kapat
-            maxQueryExecutionTime: 5000,
-            connectTimeoutMS: 30000,
-            retryAttempts: 5,
-            retryDelay: 3000,
-            keepConnectionAlive: false, // KeepAlive'i kapat
-            ssl: {
-                rejectUnauthorized: false
-            }, // Render.com için basit SSL config
-            autoLoadEntities: true,
-            applicationName: 'Nexus Business Portal API',
-        };
-    }
-
-    // Final fallback: localhost
-    logger.log('📡 Using localhost fallback...');
-    return {
-        type: 'postgres',
-        host: 'localhost',
-        port: 5432,
-        username: 'postgres',
-        password: 'postgres',
-        database: 'business_portal_man_db',
-        entities: [__dirname + '/../**/*.entity{.ts,.js}'],
-        synchronize: process.env.NODE_ENV !== 'production',
-        logging: false,
-        maxQueryExecutionTime: 5000,
-        connectTimeoutMS: 30000,
-        retryAttempts: 5,
-        retryDelay: 3000,
-        keepConnectionAlive: false,
-        ssl: {
-            rejectUnauthorized: false
-        }, // Render.com için basit SSL config
-        autoLoadEntities: true,
-        applicationName: 'Nexus Business Portal API',
-    };
+    // Emergency fallback
+    logger.error('❌ No valid database configuration found!');
+    throw new Error('DATABASE_URL or separate DB parameters must be provided');
 });
