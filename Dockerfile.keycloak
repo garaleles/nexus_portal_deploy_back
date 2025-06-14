@@ -24,5 +24,5 @@ ENV JBOSS_HTTP_PORT=8080
 # Port
 EXPOSE 8080
 
-# Start Keycloak with explicit port
-CMD ["/opt/jboss/tools/docker-entrypoint.sh", "-b", "0.0.0.0", "-Djboss.http.port=8080"]
+# Start Keycloak with shell command for proper port binding
+CMD sh -c "/opt/jboss/tools/docker-entrypoint.sh -b 0.0.0.0 -Djboss.http.port=${PORT:-8080} -Djboss.https.port=${HTTPS_PORT:-8443}"
