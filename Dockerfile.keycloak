@@ -21,15 +21,12 @@ ENV PROXY_ADDRESS_FORWARDING=true
 # Port
 EXPOSE 8080
 
-# Create startup script that handles PORT variable correctly
-RUN echo '#!/bin/bash' > /start-keycloak.sh && \
-    echo 'if [ -z "$PORT" ]; then' >> /start-keycloak.sh && \
-    echo '  export HTTP_PORT=8080' >> /start-keycloak.sh && \
-    echo 'else' >> /start-keycloak.sh && \
-    echo '  export HTTP_PORT=$PORT' >> /start-keycloak.sh && \
-    echo 'fi' >> /start-keycloak.sh && \
-    echo 'echo "Starting Keycloak on port: $HTTP_PORT"' >> /start-keycloak.sh && \
-    echo '/opt/jboss/tools/docker-entrypoint.sh -b 0.0.0.0 -Djboss.http.port=$HTTP_PORT -Djboss.socket.binding.port-offset=0' >> /start-keycloak.sh && \
-    chmod +x /start-keycloak.sh
+# Create startup script in writable directory
+RUN mkdir -p /opt/scripts && \
+    echo '#!/bin/bash' > /opt/scripts/start-keycloak.sh && \
+    echo 'HTTP_PORT=${PORT:-8080}' >> /opt/scripts/start-keycloak.sh && \
+    echo 'echo "Starting Keycloak on port: $HTTP_PORT"' >> /opt/scripts/start-keycloak.sh && \
+    echo 'exec /opt/jboss/tools/docker-entrypoint.sh -b 0.0.0.0 -Djboss.http.port=$HTTP_PORT -Djboss.socket.binding.port-offset=0' >> /opt/scripts/start-keycloak.sh && \
+    chmod +x /opt/scripts/start-keycloak.sh
 
-CMD ["/start-keycloak.sh"]
+CMD ["/opt/scripts/start-keycloak.sh"]
