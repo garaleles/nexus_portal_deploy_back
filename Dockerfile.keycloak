@@ -4,18 +4,19 @@ FROM quay.io/keycloak/keycloak:latest
 # (Opsiyonel) Realm export dosyan varsa ekle
 # COPY keycloak-realm-export.json /opt/keycloak/data/import/
 
-# Memory optimization for Render.com 512MB limit
-ENV JAVA_OPTS="-Xms128m -Xmx400m -XX:MetaspaceSize=32m -XX:MaxMetaspaceSize=64m -XX:+UseG1GC -XX:+UseStringDeduplication -XX:+OptimizeStringConcat"
+# Memory optimization for Render.com 512MB limit - More aggressive
+ENV JAVA_OPTS="-Xms96m -Xmx320m -XX:MetaspaceSize=64m -XX:MaxMetaspaceSize=128m -XX:+UseG1GC -XX:+UseStringDeduplication -XX:+OptimizeStringConcat -XX:G1HeapRegionSize=16m -XX:+UseCompressedOops -XX:+UseCompressedClassPointers -XX:+DisableExplicitGC"
 
-# Temel ayarlar
+# Temel ayarlar - Minimal features for memory optimization
 ENV KC_DB=postgres
-ENV KC_FEATURES=preview,scripts,organization
+ENV KC_FEATURES=organization
 ENV KC_HOSTNAME_STRICT=false
 ENV KC_HTTP_ENABLED=true
 ENV KC_PROXY_HEADERS=xforwarded
 ENV KC_HEALTH_ENABLED=true
 ENV KC_METRICS_ENABLED=false
 ENV KC_LEGACY_OBSERVABILITY_INTERFACE=false
+ENV KC_LOG_LEVEL=WARN
 
 # Güvenlik başlıkları
 ENV KC_SPI_CONTENT_SECURITY_POLICY_FRAME_ANCESTORS="'self' https://*.onrender.com"
