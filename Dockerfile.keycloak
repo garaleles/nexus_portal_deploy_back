@@ -21,12 +21,5 @@ ENV PROXY_ADDRESS_FORWARDING=true
 # Port
 EXPOSE 8080
 
-# Create startup script in writable directory
-RUN mkdir -p /opt/scripts && \
-    echo '#!/bin/bash' > /opt/scripts/start-keycloak.sh && \
-    echo 'HTTP_PORT=${PORT:-8080}' >> /opt/scripts/start-keycloak.sh && \
-    echo 'echo "Starting Keycloak on port: $HTTP_PORT"' >> /opt/scripts/start-keycloak.sh && \
-    echo 'exec /opt/jboss/tools/docker-entrypoint.sh -b 0.0.0.0 -Djboss.http.port=$HTTP_PORT -Djboss.socket.binding.port-offset=0' >> /opt/scripts/start-keycloak.sh && \
-    chmod +x /opt/scripts/start-keycloak.sh
-
-CMD ["/opt/scripts/start-keycloak.sh"]
+# Direct shell command - no script needed
+CMD sh -c 'HTTP_PORT=${PORT:-8080} && echo "Starting Keycloak on port: $HTTP_PORT" && exec /opt/jboss/tools/docker-entrypoint.sh -b 0.0.0.0 -Djboss.http.port=$HTTP_PORT -Djboss.socket.binding.port-offset=0'
