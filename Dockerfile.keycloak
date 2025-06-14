@@ -1,23 +1,25 @@
-FROM jboss/keycloak:16.1.1
+FROM quay.io/keycloak/keycloak:15.0.2
 
-# Render.com için environment ayarları
+# Memory optimized JVM settings for Render.com
+ENV JAVA_OPTS="-Xms128m -Xmx350m -XX:MetaspaceSize=64M -XX:MaxMetaspaceSize=128m -Djava.net.preferIPv4Stack=true"
+
+# Database configuration
 ENV DB_VENDOR=postgres
 ENV DB_ADDR=dpg-d15ebjnfte5s7394fjhg-a
 ENV DB_PORT=5432
 ENV DB_DATABASE=business_portal_man_db_ja2o
 ENV DB_USER=business_portal_man_db_ja2o_user
 ENV DB_PASSWORD=h9L7KJokhPgWEvtnO6R4VIslSdGjGDiH
+
+# Admin user
 ENV KEYCLOAK_USER=admin
 ENV KEYCLOAK_PASSWORD=admin123
 
-# Memory optimization için JVM args
-ENV JAVA_OPTS="-server -Xms128m -Xmx400m -XX:MetaspaceSize=96M -XX:MaxMetaspaceSize=256m -Djboss.modules.system.pkgs=org.jboss.byteman -Djava.awt.headless=true"
-
-# Proxy ayarları
+# Proxy settings for Render.com
 ENV PROXY_ADDRESS_FORWARDING=true
 
 # Port
 EXPOSE ${PORT:-8080}
 
-# Keycloak'ı başlat
-CMD ["-b", "0.0.0.0", "-Djboss.http.port=${PORT:-8080}"]
+# Start Keycloak
+CMD ["-Djboss.http.port=${PORT:-8080}", "-b", "0.0.0.0"]
