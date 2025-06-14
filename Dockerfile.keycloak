@@ -1,8 +1,10 @@
 FROM quay.io/keycloak/keycloak:18.0.0
 
+# Memory optimized JVM options for Render.com free tier
+ENV JAVA_OPTS="-Xms128m -Xmx350m -XX:MetaspaceSize=32M -XX:MaxMetaspaceSize=64m -Djava.net.preferIPv4Stack=true -XX:+UseG1GC -XX:+UseStringDeduplication"
+
 # Build-time environment variables
 ENV KC_DB=postgres
-ENV KC_FEATURES=token-exchange,admin-fine-grained-authz
 
 # Runtime environment variables
 ENV KC_DB_URL=postgresql://business_portal_man_db_ja2o_user:h9L7KJokhPgWEvtnO6R4VIslSdGjGDiH@dpg-d15ebjnfte5s7394fjhg-a:5432/business_portal_man_db_ja2o
@@ -15,5 +17,8 @@ ENV KC_HTTP_PORT=${PORT:-8080}
 ENV KEYCLOAK_ADMIN=admin
 ENV KEYCLOAK_ADMIN_PASSWORD=admin123
 
-# Start command for Keycloak 18.0.0
-ENTRYPOINT ["/opt/keycloak/bin/kc.sh", "start", "--auto-build", "--hostname-strict=false", "--http-enabled=true"]
+# Expose port
+EXPOSE ${PORT:-8080}
+
+# Start command optimized for low memory
+ENTRYPOINT ["/opt/keycloak/bin/kc.sh", "start-dev", "--http-port=${PORT:-8080}"]
