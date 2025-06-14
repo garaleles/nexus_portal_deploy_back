@@ -54,6 +54,11 @@ export class AppModule implements NestModule {
     configure(consumer: MiddlewareConsumer) {
         consumer
             .apply(TenantMiddleware)
-            .forRoutes('*'); // Tüm route'lara tenant middleware'ini uygula
+            .exclude(
+                '/api/public/(.*)', // Public endpoint'leri exclude et
+                '/health',          // Health check'i exclude et  
+                '/'                 // Root endpoint'i exclude et
+            )
+            .forRoutes('*'); // Diğer tüm route'lara tenant middleware'ini uygula
     }
 }
