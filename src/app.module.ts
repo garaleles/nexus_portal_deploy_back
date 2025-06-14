@@ -55,8 +55,8 @@ export class AppModule implements NestModule {
         consumer
             .apply(TenantMiddleware)
             .exclude(
-                '/api/public/(.*)', // Public endpoint'leri exclude et
-                '/health',          // Health check'i exclude et  
+                'api/public/(.*)',  // Public endpoint'leri exclude et (başında / olmadan)
+                'health',           // Health check'i exclude et
                 '/'                 // Root endpoint'i exclude et
             )
             .forRoutes('*'); // Diğer tüm route'lara tenant middleware'ini uygula
