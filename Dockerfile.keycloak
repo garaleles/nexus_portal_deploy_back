@@ -1,12 +1,9 @@
 FROM quay.io/keycloak/keycloak:18.0.0
 
-# Memory optimized JVM options for Render.com free tier
-ENV JAVA_OPTS="-Xms128m -Xmx350m -XX:MetaspaceSize=32M -XX:MaxMetaspaceSize=64m -Djava.net.preferIPv4Stack=true -XX:+UseG1GC -XX:+UseStringDeduplication"
+# Ultra low memory JVM options for Render.com 512MB limit
+ENV JAVA_OPTS="-Xms64m -Xmx300m -XX:MetaspaceSize=16M -XX:MaxMetaspaceSize=48m -Djava.net.preferIPv4Stack=true -XX:+UseSerialGC -XX:MaxRAMPercentage=60"
 
-# Build-time environment variables
-ENV KC_DB=postgres
-
-# Runtime environment variables
+# Runtime environment variables  
 ENV KC_DB_URL=postgresql://business_portal_man_db_ja2o_user:h9L7KJokhPgWEvtnO6R4VIslSdGjGDiH@dpg-d15ebjnfte5s7394fjhg-a:5432/business_portal_man_db_ja2o
 ENV KC_DB_USERNAME=business_portal_man_db_ja2o_user
 ENV KC_DB_PASSWORD=h9L7KJokhPgWEvtnO6R4VIslSdGjGDiH
@@ -20,5 +17,5 @@ ENV KEYCLOAK_ADMIN_PASSWORD=admin123
 # Expose port
 EXPOSE ${PORT:-8080}
 
-# Start command optimized for low memory
-ENTRYPOINT ["/opt/keycloak/bin/kc.sh", "start-dev", "--http-port=${PORT:-8080}"]
+# Start with minimal memory usage - no build, just run
+ENTRYPOINT ["/opt/keycloak/bin/kc.sh", "start-dev", "--http-port=${PORT:-8080}", "--hostname-strict=false", "--http-enabled=true"]
