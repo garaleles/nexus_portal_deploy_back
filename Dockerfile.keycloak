@@ -4,33 +4,17 @@ FROM quay.io/keycloak/keycloak:latest
 # Cache yapılandırma dosyasını kopyala
 COPY cache-ispn-local.xml /opt/keycloak/conf/cache-ispn-local.xml
 
-# (Opsiyonel) Realm export dosyan varsa ekle
-# COPY keycloak-realm-export.json /opt/keycloak/data/import/
-
-# Memory optimization for Render.com 512MB limit - More aggressive
-ENV JAVA_OPTS="-Xms256m -Xmx384m -XX:MetaspaceSize=96m -XX:MaxMetaspaceSize=156m -XX:+UseG1GC -XX:+UseStringDeduplication -XX:+OptimizeStringConcat -XX:G1HeapRegionSize=8m -XX:+UseCompressedOops -XX:+UseCompressedClassPointers -XX:+DisableExplicitGC -XX:+ParallelRefProcEnabled -XX:G1RSetUpdatingPauseTimePercent=5"
-
-# Temel ayarlar - Minimal features for memory optimization
+# Temel ayarlar
 ENV KC_DB=postgres
 ENV KC_FEATURES="token-exchange,admin-fine-grained-authz"
-ENV KC_HOSTNAME_STRICT=true
 ENV KC_HTTP_ENABLED=true
-ENV KC_PROXY=edge
 ENV KC_HEALTH_ENABLED=true
 ENV KC_METRICS_ENABLED=true
-ENV KC_LOG_LEVEL=DEBUG
-ENV KC_LOG=console,file
-ENV KC_LOG_CONSOLE_COLOR=true
-ENV KC_LOG_CONSOLE_OUTPUT=json
+ENV KC_LOG_LEVEL=INFO
 
 # Cache ayarları
 ENV KC_CACHE=ispn
-ENV KC_CACHE_STACK=tcp
 ENV KC_CACHE_CONFIG_FILE=cache-ispn-local.xml
-
-# Güvenlik başlıkları
-ENV KC_SPI_CONTENT_SECURITY_POLICY_FRAME_ANCESTORS="'self' https://*.onrender.com"
-ENV KC_SPI_X_FRAME_OPTIONS=SAMEORIGIN
 
 # Admin kullanıcısı için environment değişkenleri
 ENV KEYCLOAK_ADMIN=admin
@@ -39,14 +23,7 @@ ENV KEYCLOAK_ADMIN_PASSWORD=admin
 # Hostname ayarları
 ENV KC_HOSTNAME=business-portal-keycloak.onrender.com
 ENV KC_HTTP_ENABLED=true
-ENV KC_HOSTNAME_STRICT=true
-ENV KC_HOSTNAME_STRICT_HTTPS=true
 ENV KC_PROXY=edge
-
-# SSL/TLS ayarları
-ENV KC_HTTPS_PROTOCOLS="TLSv1.2,TLSv1.3"
-ENV KC_HTTPS_CERTIFICATE_FILE=/opt/keycloak/conf/server.crt.pem
-ENV KC_HTTPS_CERTIFICATE_KEY_FILE=/opt/keycloak/conf/server.key.pem
 
 # Veritabanı ayarları
 ENV KC_DB_URL=jdbc:postgresql://dpg-d15ebjnfte5s7394fjhg-a:5432/business_portal_man_db_ja2o
