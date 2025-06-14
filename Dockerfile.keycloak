@@ -21,5 +21,5 @@ ENV PROXY_ADDRESS_FORWARDING=true
 # Port configuration
 EXPOSE 8080
 
-# Use shell form for proper environment variable expansion
-CMD /opt/jboss/tools/docker-entrypoint.sh -b 0.0.0.0 -Djboss.http.port=${PORT:-8080}
+# Start Keycloak - KC_HTTP_PORT environment variable will be used automatically
+CMD ["/opt/jboss/tools/docker-entrypoint.sh", "-b", "0.0.0.0"]
