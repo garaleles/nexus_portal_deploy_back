@@ -15,11 +15,11 @@ ENV DB_PASSWORD=h9L7KJokhPgWEvtnO6R4VIslSdGjGDiH
 ENV KEYCLOAK_USER=admin
 ENV KEYCLOAK_PASSWORD=admin123
 
-# Proxy settings for Render.com
+# Render.com için KRITIK ayarlar - Makaleye göre
 ENV PROXY_ADDRESS_FORWARDING=true
 
 # Port
 EXPOSE 8080
 
-# Direct shell command - no script needed
-CMD sh -c 'HTTP_PORT=${PORT:-8080} && echo "Starting Keycloak on port: $HTTP_PORT" && exec /opt/jboss/tools/docker-entrypoint.sh -b 0.0.0.0 -Djboss.http.port=$HTTP_PORT -Djboss.socket.binding.port-offset=0'
+# Makaleye göre doğru başlatma komutu
+CMD ["/opt/jboss/tools/docker-entrypoint.sh", "-b", "0.0.0.0", "--http-enabled=true", "--proxy-headers=xforwarded", "--hostname-strict=false"]
