@@ -21,5 +21,5 @@ ENV PROXY_ADDRESS_FORWARDING=true
 # Port
 EXPOSE 8080
 
-# SIMPLE entrypoint - no complex scripts
-CMD ["/opt/jboss/keycloak/bin/standalone.sh", "-b", "0.0.0.0", "-Djboss.http.port=${PORT:-8080}"]
+# SHELL FORM - to expand PORT variable
+CMD /opt/jboss/keycloak/bin/standalone.sh -b 0.0.0.0 -Djboss.http.port=${PORT:-8080}
