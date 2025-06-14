@@ -21,13 +21,18 @@ ENV PROXY_ADDRESS_FORWARDING=true
 # Port
 EXPOSE 8080
 
-# Switch to root to create and permission the script
+# Switch to root to create the custom entrypoint wrapper
 USER root
-RUN echo '#!/bin/sh' > /opt/jboss/start-keycloak.sh && \
-    echo 'exec /opt/jboss/tools/docker-entrypoint.sh -b 0.0.0.0 -Djboss.http.port=${PORT:-8080}' >> /opt/jboss/start-keycloak.sh && \
-    chown jboss:jboss /opt/jboss/start-keycloak.sh && \
-    chmod +x /opt/jboss/start-keycloak.sh
+RUN echo '#!/bin/sh' > /opt/jboss/custom-entrypoint.sh && \
+    echo '# This script wraps the original entrypoint to inject dynamic port configuration.' >> /opt/jboss/custom-entrypoint.sh && \
+    echo 'exec /opt/jboss/tools/docker-entrypoint.sh -Djboss.http.port=${PORT:-8080} "$@"' >> /opt/jboss/custom-entrypoint.sh && \
+    chown jboss:jboss /opt/jboss/custom-entrypoint.sh && \
+    chmod +x /opt/jboss/custom-entrypoint.sh
+
 # Switch back to the non-root user for security
 USER jboss
 
-CMD ["/opt/jboss/start-keycloak.sh"]
+# Set our custom script as the new entrypoint
+ENTRYPOINT ["/opt/jboss/custom-entrypoint.sh"]
+# Set the default command for Keycloak (this will be passed as "$@" to our script)
+CMD ["-b", "0.0.0.0"]
