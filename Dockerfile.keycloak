@@ -29,7 +29,7 @@ ENV KC_HOSTNAME_STRICT=false
 ENV KC_HOSTNAME_STRICT_HTTPS=false
 
 # Veritabanı ayarları
-ENV KC_DB_URL=jdbc:postgresql://dpg-d15ebjnfte5s7394fjhg-a/business_portal_man_db_ja2o
+ENV KC_DB_URL=jdbc:postgresql://dpg-d15ebjnfte5s7394fjhg-a:5432/business_portal_man_db_ja2o
 ENV KC_DB_USERNAME=business_portal_man_db_ja2o_user
 ENV KC_DB_PASSWORD=h9L7KJokhPgWEvtnO6R4VIslSdGjGDiH
 
