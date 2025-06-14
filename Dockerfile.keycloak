@@ -15,11 +15,19 @@ ENV DB_PASSWORD=h9L7KJokhPgWEvtnO6R4VIslSdGjGDiH
 ENV KEYCLOAK_USER=admin
 ENV KEYCLOAK_PASSWORD=admin123
 
-# Render.com için KRITIK ayarlar - Makaleye göre
+# Render.com için KRITIK ayarlar
 ENV PROXY_ADDRESS_FORWARDING=true
 
 # Port
 EXPOSE 8080
 
-# Keycloak 15.0.2 için SADECE geçerli argümanlar ve doğru PORT değişkeni kullanımı ("" ÇİFT TIRNAK ile)
-CMD sh -c "/opt/jboss/tools/docker-entrypoint.sh -b 0.0.0.0 -Djboss.http.port=${PORT:-8080}"
+# Switch to root to create and permission the script
+USER root
+RUN echo '#!/bin/sh' > /opt/jboss/start-keycloak.sh && \
+    echo 'exec /opt/jboss/tools/docker-entrypoint.sh -b 0.0.0.0 -Djboss.http.port=${PORT:-8080}' >> /opt/jboss/start-keycloak.sh && \
+    chown jboss:jboss /opt/jboss/start-keycloak.sh && \
+    chmod +x /opt/jboss/start-keycloak.sh
+# Switch back to the non-root user for security
+USER jboss
+
+CMD ["/opt/jboss/start-keycloak.sh"]
