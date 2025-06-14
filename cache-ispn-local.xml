@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <infinispan xmlns="urn:infinispan:config:14.0">
     <cache-container name="keycloak">
-        <transport stack="tcp"/>
+        <transport cluster="keycloak-cluster"/>
         
         <!-- Authorization Cache -->
         <local-cache name="authorization">
@@ -101,15 +101,15 @@
             <memory max-count="100"/>
         </local-cache>
 
-        <!-- Work Cache -->
-        <local-cache name="work">
+        <!-- Work Cache - Replicated -->
+        <replicated-cache name="work">
             <encoding>
                 <key media-type="application/x-java-object"/>
                 <value media-type="application/x-java-object"/>
             </encoding>
             <expiration lifespan="900000"/>
             <memory max-count="100"/>
-        </local-cache>
+        </replicated-cache>
 
         <!-- Offline Client Sessions Cache -->
         <local-cache name="offlineClientSessions">
