@@ -18,16 +18,8 @@ ENV KEYCLOAK_PASSWORD=admin123
 # Proxy settings for Render.com
 ENV PROXY_ADDRESS_FORWARDING=true
 
-# Set default port if not provided
-ENV HTTP_PORT=8080
-
 # Port
 EXPOSE 8080
 
-# Create startup script with proper permissions
-RUN printf '#!/bin/bash\nACTUAL_PORT=${PORT:-8080}\nexec /opt/jboss/tools/docker-entrypoint.sh -Djboss.http.port=$ACTUAL_PORT -b 0.0.0.0 "$@"\n' > /tmp/start.sh && \
-    chmod +x /tmp/start.sh && \
-    mv /tmp/start.sh /start.sh
-
-# Start Keycloak with proper port handling
-CMD ["/start.sh"]
+# Start Keycloak - Render.com PORT variable will be automatically used
+CMD ["-b", "0.0.0.0"]
