@@ -18,11 +18,18 @@ ENV KEYCLOAK_PASSWORD=admin123
 # Proxy settings for Render.com
 ENV PROXY_ADDRESS_FORWARDING=true
 
-# PORT FIX - Render.com için
-ENV JBOSS_HTTP_PORT=8080
-
 # Port
 EXPOSE 8080
 
-# Render.com PORT fix - Keycloak 15.0.2 için
-CMD ["/opt/jboss/tools/docker-entrypoint.sh", "-b", "0.0.0.0", "-Djboss.http.port=${PORT:-8080}", "-Djboss.socket.binding.port-offset=0"]
+# Create startup script that handles PORT variable correctly
+RUN echo '#!/bin/bash' > /start-keycloak.sh && \
+    echo 'if [ -z "$PORT" ]; then' >> /start-keycloak.sh && \
+    echo '  export HTTP_PORT=8080' >> /start-keycloak.sh && \
+    echo 'else' >> /start-keycloak.sh && \
+    echo '  export HTTP_PORT=$PORT' >> /start-keycloak.sh && \
+    echo 'fi' >> /start-keycloak.sh && \
+    echo 'echo "Starting Keycloak on port: $HTTP_PORT"' >> /start-keycloak.sh && \
+    echo '/opt/jboss/tools/docker-entrypoint.sh -b 0.0.0.0 -Djboss.http.port=$HTTP_PORT -Djboss.socket.binding.port-offset=0' >> /start-keycloak.sh && \
+    chmod +x /start-keycloak.sh
+
+CMD ["/start-keycloak.sh"]
