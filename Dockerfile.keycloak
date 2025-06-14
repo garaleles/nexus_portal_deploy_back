@@ -18,7 +18,10 @@ ENV KC_HTTP_ENABLED=true
 ENV KC_PROXY=edge
 ENV KC_HEALTH_ENABLED=true
 ENV KC_METRICS_ENABLED=true
-ENV KC_LOG_LEVEL=INFO
+ENV KC_LOG_LEVEL=DEBUG
+ENV KC_LOG=console,file
+ENV KC_LOG_CONSOLE_COLOR=true
+ENV KC_LOG_CONSOLE_OUTPUT=json
 
 # Cache ayarları
 ENV KC_CACHE=ispn
@@ -36,8 +39,14 @@ ENV KEYCLOAK_ADMIN_PASSWORD=admin
 # Hostname ayarları
 ENV KC_HOSTNAME=business-portal-keycloak.onrender.com
 ENV KC_HTTP_ENABLED=true
-ENV KC_HOSTNAME_STRICT=false
-ENV KC_HOSTNAME_STRICT_HTTPS=false
+ENV KC_HOSTNAME_STRICT=true
+ENV KC_HOSTNAME_STRICT_HTTPS=true
+ENV KC_PROXY=edge
+
+# SSL/TLS ayarları
+ENV KC_HTTPS_PROTOCOLS="TLSv1.2,TLSv1.3"
+ENV KC_HTTPS_CERTIFICATE_FILE=/opt/keycloak/conf/server.crt.pem
+ENV KC_HTTPS_CERTIFICATE_KEY_FILE=/opt/keycloak/conf/server.key.pem
 
 # Veritabanı ayarları
 ENV KC_DB_URL=jdbc:postgresql://dpg-d15ebjnfte5s7394fjhg-a:5432/business_portal_man_db_ja2o
