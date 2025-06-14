@@ -27,6 +27,12 @@ export class TenantMiddleware implements NestMiddleware {
 
   async use(req: TenantRequest, res: Response, next: NextFunction) {
     try {
+      // Public endpoint kontrolü
+      if (req.url.includes('/api/public/')) {
+        this.logger.log('🌐 PUBLIC_ENDPOINT - Tenant kontrolü bypass ediliyor');
+        return next();
+      }
+
       let tenant: Tenant | null = null;
       let userId: string | null = null;
       let isValidTenantUser = false;
