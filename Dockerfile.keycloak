@@ -18,8 +18,11 @@ ENV KEYCLOAK_PASSWORD=admin123
 # Proxy settings for Render.com
 ENV PROXY_ADDRESS_FORWARDING=true
 
-# Port
-EXPOSE 8080
+# Port configuration for Render.com
+ENV JBOSS_HTTP_PORT=$PORT
 
-# Start Keycloak - Render.com PORT variable will be automatically used
-CMD ["-b", "0.0.0.0"]
+# Port
+EXPOSE $PORT
+
+# Start Keycloak with Render.com port
+CMD ["-b", "0.0.0.0", "-Djboss.http.port=$PORT"]
