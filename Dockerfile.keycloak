@@ -4,6 +4,9 @@ FROM quay.io/keycloak/keycloak:latest
 # (Opsiyonel) Realm export dosyan varsa ekle
 # COPY keycloak-realm-export.json /opt/keycloak/data/import/
 
+# Memory optimization for Render.com 512MB limit
+ENV JAVA_OPTS="-Xms128m -Xmx400m -XX:MetaspaceSize=32m -XX:MaxMetaspaceSize=64m -XX:+UseG1GC -XX:+UseStringDeduplication -XX:+OptimizeStringConcat"
+
 # Temel ayarlar
 ENV KC_DB=postgres
 ENV KC_FEATURES=preview,scripts,organization
@@ -11,8 +14,8 @@ ENV KC_HOSTNAME_STRICT=false
 ENV KC_HTTP_ENABLED=true
 ENV KC_PROXY_HEADERS=xforwarded
 ENV KC_HEALTH_ENABLED=true
-ENV KC_METRICS_ENABLED=true
-ENV KC_LEGACY_OBSERVABILITY_INTERFACE=true
+ENV KC_METRICS_ENABLED=false
+ENV KC_LEGACY_OBSERVABILITY_INTERFACE=false
 
 # Güvenlik başlıkları
 ENV KC_SPI_CONTENT_SECURITY_POLICY_FRAME_ANCESTORS="'self' https://*.onrender.com"
@@ -37,7 +40,8 @@ RUN /opt/keycloak/bin/kc.sh build
 
 EXPOSE $PORT
 
-HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+HEALTHCHECK --interval=60s --timeout=15s --start-period=120s --retries=5 \
   CMD curl -f http://localhost:$PORT/health/ready || exit 1
 
-ENTRYPOINT ["/opt/keycloak/bin/kc.sh", "start"]
+# Start with memory-optimized settings
+ENTRYPOINT ["/opt/keycloak/bin/kc.sh", "start", "--verbose"]
