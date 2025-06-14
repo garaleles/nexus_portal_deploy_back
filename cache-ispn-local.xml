@@ -111,6 +111,16 @@
             <memory max-count="100"/>
         </local-cache>
 
+        <!-- Offline Client Sessions Cache -->
+        <local-cache name="offlineClientSessions">
+            <encoding>
+                <key media-type="application/x-java-object"/>
+                <value media-type="application/x-java-object"/>
+            </encoding>
+            <expiration lifespan="86400000"/>
+            <memory max-count="100"/>
+        </local-cache>
+
         <!-- Login Failures Cache -->
         <local-cache name="loginFailures">
             <encoding>
