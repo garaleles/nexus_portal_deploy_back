@@ -4,36 +4,26 @@ FROM quay.io/keycloak/keycloak:26.0.0
 # Cache yapılandırma dosyasını kopyala
 COPY cache-ispn-local.xml /opt/keycloak/conf/cache-ispn-local.xml
 
-# Temel ayarlar
+# Build-time environment variables
 ENV KC_DB=postgres
 ENV KC_FEATURES="token-exchange,admin-fine-grained-authz"
-ENV KC_HTTP_ENABLED=true
-ENV KC_LOG_LEVEL=INFO
-
-# Cache ayarları
 ENV KC_CACHE=ispn
 ENV KC_CACHE_CONFIG_FILE=cache-ispn-local.xml
+ENV KC_LEGACY_OBSERVABILITY_INTERFACE=true
 
-# Admin kullanıcısı için environment değişkenleri
-ENV KEYCLOAK_ADMIN=admin
-ENV KEYCLOAK_ADMIN_PASSWORD=admin
-
-# Hostname ve HTTPS ayarları
-ENV KC_HOSTNAME=business-portal-keycloak.onrender.com
-ENV KC_HOSTNAME_STRICT=false
-ENV KC_HOSTNAME_STRICT_HTTPS=false
-ENV KC_PROXY_HEADERS=xforwarded
-ENV KC_PROXY_ADDRESS_FORWARDING=true
-ENV KC_HOSTNAME_URL=https://business-portal-keycloak.onrender.com
-ENV KC_HOSTNAME_ADMIN_URL=https://business-portal-keycloak.onrender.com
-
-# Veritabanı ayarları
+# Runtime environment variables
 ENV KC_DB_URL=postgresql://business_portal_man_db_ja2o_user:h9L7KJokhPgWEvtnO6R4VIslSdGjGDiH@dpg-d15ebjnfte5s7394fjhg-a:5432/business_portal_man_db_ja2o
 ENV KC_DB_USERNAME=business_portal_man_db_ja2o_user
 ENV KC_DB_PASSWORD=h9L7KJokhPgWEvtnO6R4VIslSdGjGDiH
+ENV KC_HOSTNAME=business-portal-keycloak.onrender.com
+ENV KC_HOSTNAME_STRICT=false
+ENV KC_HTTP_ENABLED=true
+ENV KC_PROXY_HEADERS=xforwarded
 ENV KC_HEALTH_ENABLED=true
 ENV KC_METRICS_ENABLED=true
+ENV KC_LOG_LEVEL=INFO
 
+# Build optimized image
 RUN /opt/keycloak/bin/kc.sh build
 
 EXPOSE $PORT
@@ -41,5 +31,5 @@ EXPOSE $PORT
 HEALTHCHECK --interval=60s --timeout=15s --start-period=120s --retries=5 \
   CMD curl -f http://localhost:$PORT/ || exit 1
 
-# Start with memory-optimized settings and updated proxy settings
+# Start command
 ENTRYPOINT ["/opt/keycloak/bin/kc.sh", "start", "--optimized", "--verbose"]
