@@ -1,6 +1,6 @@
 FROM quay.io/keycloak/keycloak:15.0.2
 
-# Memory optimized JVM settings for Render.com with increased transaction timeout
+# Memory optimized JVM settings for Render.com
 ENV JAVA_OPTS="-Xms128m -Xmx256m -XX:MetaspaceSize=96m -XX:MaxMetaspaceSize=128m -Djava.net.preferIPv4Stack=true -Dcom.arjuna.ats.arjuna.coordinator.defaultTimeout=300"
 
 # Database configuration
@@ -21,16 +21,17 @@ ENV PROXY_ADDRESS_FORWARDING=true
 # Port
 EXPOSE 8080
 
-# Switch to root to create the custom entrypoint wrapper
+# Switch to root to create the FINAL entrypoint
 USER root
-RUN echo '#!/bin/sh' > /opt/jboss/custom-entrypoint.sh && \
-    echo '# This script ensures Keycloak starts in server mode with the correct port.' >> /opt/jboss/custom-entrypoint.sh && \
-    echo 'exec /opt/jboss/tools/docker-entrypoint.sh -b 0.0.0.0 -c standalone.xml -Djboss.http.port=${PORT:-8080}' >> /opt/jboss/custom-entrypoint.sh && \
-    chown jboss:jboss /opt/jboss/custom-entrypoint.sh && \
-    chmod +x /opt/jboss/custom-entrypoint.sh
+RUN echo '#!/bin/sh' > /opt/jboss/final-entrypoint.sh && \
+    echo '# BYPASS docker-entrypoint.sh - direct standalone.sh call' >> /opt/jboss/final-entrypoint.sh && \
+    echo 'cd /opt/jboss/keycloak' >> /opt/jboss/final-entrypoint.sh && \
+    echo 'exec bin/standalone.sh -b 0.0.0.0 -Djboss.http.port=${PORT:-8080}' >> /opt/jboss/final-entrypoint.sh && \
+    chown jboss:jboss /opt/jboss/final-entrypoint.sh && \
+    chmod +x /opt/jboss/final-entrypoint.sh
 
-# Switch back to the non-root user for security
+# Switch back to the non-root user
 USER jboss
 
-# Set our custom script as the new entrypoint.
-ENTRYPOINT ["/opt/jboss/custom-entrypoint.sh"]
+# FINAL ENTRYPOINT - bypass docker-entrypoint.sh completely
+ENTRYPOINT ["/opt/jboss/final-entrypoint.sh"]
