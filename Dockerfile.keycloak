@@ -21,5 +21,5 @@ ENV PROXY_ADDRESS_FORWARDING=true
 # Port
 EXPOSE 8080
 
-# Keycloak 15.0.2 için SADECE geçerli argümanlar
-CMD sh -c '/opt/jboss/tools/docker-entrypoint.sh -b 0.0.0.0 -Djboss.http.port=${PORT:-8080}'
+# Keycloak 15.0.2 için SADECE geçerli argümanlar ve doğru PORT değişkeni kullanımı ("" ÇİFT TIRNAK ile)
+CMD sh -c "/opt/jboss/tools/docker-entrypoint.sh -b 0.0.0.0 -Djboss.http.port=${PORT:-8080}"
