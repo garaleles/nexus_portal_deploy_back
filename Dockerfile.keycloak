@@ -1,19 +1,9 @@
 FROM quay.io/keycloak/keycloak:26.0.0
 
 # Environment variables
-ENV KC_DB=postgres
 ENV KC_DB_URL=postgresql://business_portal_man_db_ja2o_user:h9L7KJokhPgWEvtnO6R4VIslSdGjGDiH@dpg-d15ebjnfte5s7394fjhg-a:5432/business_portal_man_db_ja2o
 ENV KC_DB_USERNAME=business_portal_man_db_ja2o_user
 ENV KC_DB_PASSWORD=h9L7KJokhPgWEvtnO6R4VIslSdGjGDiH
-ENV KC_HOSTNAME_STRICT=false
-ENV KC_HTTP_ENABLED=true
-ENV KC_PROXY_HEADERS=xforwarded
 
-# Build
-RUN /opt/keycloak/bin/kc.sh build
-
-# Expose port
-EXPOSE $PORT
-
-# Start
-CMD ["sh", "-c", "/opt/keycloak/bin/kc.sh start --optimized --http-port=$PORT"]
+# Start in development mode - no build needed
+ENTRYPOINT ["/opt/keycloak/bin/kc.sh", "start-dev"]
