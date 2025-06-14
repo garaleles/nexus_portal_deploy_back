@@ -18,11 +18,8 @@ ENV KEYCLOAK_PASSWORD=admin123
 # Proxy settings for Render.com
 ENV PROXY_ADDRESS_FORWARDING=true
 
-# Port configuration for Render.com
-ENV JBOSS_HTTP_PORT=$PORT
+# Port configuration
+EXPOSE 8080
 
-# Port
-EXPOSE $PORT
-
-# Start Keycloak with Render.com port
-CMD ["-b", "0.0.0.0", "-Djboss.http.port=$PORT"]
+# Use shell form for proper environment variable expansion
+CMD /opt/jboss/tools/docker-entrypoint.sh -b 0.0.0.0 -Djboss.http.port=${PORT:-8080}
