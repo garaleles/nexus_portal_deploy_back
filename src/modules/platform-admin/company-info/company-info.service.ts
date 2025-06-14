@@ -30,55 +30,29 @@ export class CompanyInfoService {
   }
 
   /**
- * İlk şirket bilgisini getirir
- */
-  async findFirst(): Promise<CompanyInfo | null> {
-    console.log('🔍 FIND_FIRST - Veritabanından veri çekiliyor...');
+   * Public endpoint için tenant kontrolü olmadan ilk şirket bilgisini getirir
+   */
+  async findFirstPublic(): Promise<CompanyInfo | null> {
+    console.log('🔍 FIND_FIRST_PUBLIC - Veritabanından veri çekiliyor...');
 
-    const companyInfos = await this.companyInfoRepository.find({
-      order: {
-        createdAt: 'ASC',
-      },
-      take: 1,
-    });
-
-    console.log('🔍 FIND_FIRST - Bulunan kayıt sayısı:', companyInfos.length);
+    const companyInfos = await this.companyInfoRepository
+      .createQueryBuilder('companyInfo')
+      .orderBy('companyInfo.createdAt', 'ASC')
+      .take(1)
+      .getMany();
 
     if (companyInfos.length > 0) {
       const companyInfo = companyInfos[0];
-      console.log('🔍 FIND_FIRST - Veritabanından gelen raw data:', {
-        id: companyInfo.id,
-        googleMapsApiKey: companyInfo.googleMapsApiKey,
-        // Diğer sensitive alanları log'a yazmayalım
-      });
-
-      // Eğer googleMapsApiKey varsa ve şifreli değilse (plain text), şifreli alanları çözmeye çalışma
-      if (companyInfo.googleMapsApiKey && !this.isEncrypted(companyInfo.googleMapsApiKey)) {
-        console.log('📄 FIND_FIRST - Plain text veri tespit edildi, olduğu gibi döndürülüyor');
-        return companyInfo; // Plain text olarak döndür
-      }
-
-      if (companyInfo.googleMapsApiKey) {
-        console.log('🔓 FIND_FIRST - Şifreli veri tespit edildi, çözülmeye çalışılıyor');
-      } else {
-        console.log('⚠️  FIND_FIRST - googleMapsApiKey boş/null');
-      }
 
       // Şifreli alanları çöz
       try {
-        const decryptedData = this.encryptionService.decryptFields(companyInfo, this.encryptedFields);
-        console.log('🔓 FIND_FIRST - Çözülmüş data:', {
-          id: decryptedData.id,
-          googleMapsApiKey: decryptedData.googleMapsApiKey,
-        });
-        return decryptedData;
+        return this.encryptionService.decryptFields(companyInfo, this.encryptedFields);
       } catch (error) {
-        console.warn('❌ FIND_FIRST - Şifre çözme hatası, plain text olarak döndürülüyor:', error.message);
-        return companyInfo; // Hata durumunda plain text döndür
+        console.warn('❌ FIND_FIRST_PUBLIC - Şifre çözme hatası, plain text olarak döndürülüyor:', error.message);
+        return companyInfo;
       }
     }
 
-    console.log('🔍 FIND_FIRST - Hiç kayıt bulunamadı, null döndürülüyor');
     return null;
   }
 

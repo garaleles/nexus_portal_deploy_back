@@ -15,7 +15,7 @@ export class PublicCompanyInfoController {
   @Get()
   async getCompanyInfo() {
     try {
-      const companyInfo = await this.companyInfoService.findFirst();
+      const companyInfo = await this.companyInfoService.findFirstPublic();
 
       if (!companyInfo) {
         return {
