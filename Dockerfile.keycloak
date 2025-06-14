@@ -1,22 +1,29 @@
 # Keycloak Dockerfile for render.com deployment
 FROM quay.io/keycloak/keycloak:latest
 
+# Cache yapılandırma dosyasını kopyala
+COPY cache-ispn-local.xml /opt/keycloak/conf/cache-ispn-local.xml
+
 # (Opsiyonel) Realm export dosyan varsa ekle
 # COPY keycloak-realm-export.json /opt/keycloak/data/import/
 
 # Memory optimization for Render.com 512MB limit - More aggressive
-ENV JAVA_OPTS="-Xms96m -Xmx320m -XX:MetaspaceSize=64m -XX:MaxMetaspaceSize=128m -XX:+UseG1GC -XX:+UseStringDeduplication -XX:+OptimizeStringConcat -XX:G1HeapRegionSize=16m -XX:+UseCompressedOops -XX:+UseCompressedClassPointers -XX:+DisableExplicitGC"
+ENV JAVA_OPTS="-Xms256m -Xmx384m -XX:MetaspaceSize=96m -XX:MaxMetaspaceSize=156m -XX:+UseG1GC -XX:+UseStringDeduplication -XX:+OptimizeStringConcat -XX:G1HeapRegionSize=8m -XX:+UseCompressedOops -XX:+UseCompressedClassPointers -XX:+DisableExplicitGC -XX:+ParallelRefProcEnabled -XX:G1RSetUpdatingPauseTimePercent=5"
 
 # Temel ayarlar - Minimal features for memory optimization
 ENV KC_DB=postgres
-ENV KC_FEATURES=organization
-ENV KC_HOSTNAME_STRICT=false
+ENV KC_FEATURES="token-exchange,admin-fine-grained-authz"
+ENV KC_HOSTNAME_STRICT=true
 ENV KC_HTTP_ENABLED=true
-ENV KC_PROXY_HEADERS=xforwarded
+ENV KC_PROXY=edge
 ENV KC_HEALTH_ENABLED=true
-ENV KC_METRICS_ENABLED=false
-ENV KC_LEGACY_OBSERVABILITY_INTERFACE=false
-ENV KC_LOG_LEVEL=WARN
+ENV KC_METRICS_ENABLED=true
+ENV KC_LOG_LEVEL=INFO
+
+# Cache ayarları
+ENV KC_CACHE=ispn
+ENV KC_CACHE_STACK=tcp
+ENV KC_CACHE_CONFIG_FILE=cache-ispn-local.xml
 
 # Güvenlik başlıkları
 ENV KC_SPI_CONTENT_SECURITY_POLICY_FRAME_ANCESTORS="'self' https://*.onrender.com"
