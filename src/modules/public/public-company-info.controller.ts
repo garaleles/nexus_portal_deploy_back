@@ -1,5 +1,6 @@
 import { Controller, Get } from '@nestjs/common';
 import { CompanyInfoService } from '../platform-admin/company-info/company-info.service';
+import { Public } from '../../core/auth/decorators/public.decorator';
 
 @Controller('public/company-info')
 export class PublicCompanyInfoController {
@@ -10,6 +11,7 @@ export class PublicCompanyInfoController {
   /**
    * Public company info - banka bilgileri vs. için
    */
+  @Public()
   @Get()
   async getCompanyInfo() {
     try {
