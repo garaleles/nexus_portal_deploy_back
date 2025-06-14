@@ -28,5 +28,10 @@ ENV KEYCLOAK_WELCOME_THEME=keycloak
 # Port
 EXPOSE 8080
 
-# Render.com için özel başlatma komutu
-CMD ["sh", "-c", "/opt/jboss/tools/docker-entrypoint.sh -b 0.0.0.0 -Djboss.socket.binding.port-offset=0 -Djboss.http.port=${PORT:-8080} -Dkeycloak.profile.feature.docker=enabled -Dkeycloak.frontendUrl=https://business-portal-keycloak.onrender.com/auth"]
+# Render.com için PORT fix script
+RUN echo '#!/bin/bash\n\
+export KEYCLOAK_HTTP_PORT=${PORT:-8080}\n\
+/opt/jboss/tools/docker-entrypoint.sh -b 0.0.0.0 -Djboss.socket.binding.port-offset=0 -Djboss.http.port=${PORT:-8080} -Dkeycloak.profile.feature.docker=enabled -Dkeycloak.frontendUrl=https://business-portal-keycloak.onrender.com/auth\n\
+' > /opt/start-keycloak.sh && chmod +x /opt/start-keycloak.sh
+
+CMD ["/opt/start-keycloak.sh"]
