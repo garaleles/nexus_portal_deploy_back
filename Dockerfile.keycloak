@@ -1,7 +1,7 @@
 FROM quay.io/keycloak/keycloak:15.0.2
 
-# Memory optimized JVM settings for Render.com
-ENV JAVA_OPTS="-Xms128m -Xmx350m -XX:MetaspaceSize=64M -XX:MaxMetaspaceSize=128m -Djava.net.preferIPv4Stack=true"
+# Memory optimized JVM settings for Render.com with increased transaction timeout
+ENV JAVA_OPTS="-Xms128m -Xmx256m -XX:MetaspaceSize=96m -XX:MaxMetaspaceSize=128m -Djava.net.preferIPv4Stack=true -Dcom.arjuna.ats.arjuna.coordinator.defaultTimeout=300"
 
 # Database configuration
 ENV DB_VENDOR=postgres
@@ -32,5 +32,5 @@ RUN echo '#!/bin/sh' > /opt/jboss/custom-entrypoint.sh && \
 # Switch back to the non-root user for security
 USER jboss
 
-# Set our custom script as the new entrypoint. No CMD needed.
+# Set our custom script as the new entrypoint.
 ENTRYPOINT ["/opt/jboss/custom-entrypoint.sh"]
