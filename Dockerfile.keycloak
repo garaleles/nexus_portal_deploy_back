@@ -24,10 +24,10 @@ ENV HTTP_PORT=8080
 # Port
 EXPOSE 8080
 
-# Create startup script
-RUN echo '#!/bin/bash\n\
-ACTUAL_PORT=${PORT:-8080}\n\
-exec /opt/jboss/tools/docker-entrypoint.sh -Djboss.http.port=$ACTUAL_PORT -b 0.0.0.0 "$@"' > /start.sh && chmod +x /start.sh
+# Create startup script with proper permissions
+RUN printf '#!/bin/bash\nACTUAL_PORT=${PORT:-8080}\nexec /opt/jboss/tools/docker-entrypoint.sh -Djboss.http.port=$ACTUAL_PORT -b 0.0.0.0 "$@"\n' > /tmp/start.sh && \
+    chmod +x /tmp/start.sh && \
+    mv /tmp/start.sh /start.sh
 
 # Start Keycloak with proper port handling
 CMD ["/start.sh"]
