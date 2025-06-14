@@ -1,21 +1,23 @@
-FROM quay.io/keycloak/keycloak:18.0.0
+FROM jboss/keycloak:16.1.1
 
-# Ultra low memory JVM options for Render.com 512MB limit
-ENV JAVA_OPTS="-Xms64m -Xmx300m -XX:MetaspaceSize=16M -XX:MaxMetaspaceSize=48m -Djava.net.preferIPv4Stack=true -XX:+UseSerialGC -XX:MaxRAMPercentage=60"
+# Render.com için environment ayarları
+ENV DB_VENDOR=postgres
+ENV DB_ADDR=dpg-d15ebjnfte5s7394fjhg-a
+ENV DB_PORT=5432
+ENV DB_DATABASE=business_portal_man_db_ja2o
+ENV DB_USER=business_portal_man_db_ja2o_user
+ENV DB_PASSWORD=h9L7KJokhPgWEvtnO6R4VIslSdGjGDiH
+ENV KEYCLOAK_USER=admin
+ENV KEYCLOAK_PASSWORD=admin123
 
-# Runtime environment variables  
-ENV KC_DB_URL=postgresql://business_portal_man_db_ja2o_user:h9L7KJokhPgWEvtnO6R4VIslSdGjGDiH@dpg-d15ebjnfte5s7394fjhg-a:5432/business_portal_man_db_ja2o
-ENV KC_DB_USERNAME=business_portal_man_db_ja2o_user
-ENV KC_DB_PASSWORD=h9L7KJokhPgWEvtnO6R4VIslSdGjGDiH
-ENV KC_HOSTNAME_STRICT=false
-ENV KC_HTTP_ENABLED=true
-ENV KC_PROXY_HEADERS=xforwarded
-ENV KC_HTTP_PORT=${PORT:-8080}
-ENV KEYCLOAK_ADMIN=admin
-ENV KEYCLOAK_ADMIN_PASSWORD=admin123
+# Memory optimization için JVM args
+ENV JAVA_OPTS="-server -Xms128m -Xmx400m -XX:MetaspaceSize=96M -XX:MaxMetaspaceSize=256m -Djboss.modules.system.pkgs=org.jboss.byteman -Djava.awt.headless=true"
 
-# Expose port
+# Proxy ayarları
+ENV PROXY_ADDRESS_FORWARDING=true
+
+# Port
 EXPOSE ${PORT:-8080}
 
-# Start with minimal memory usage - no build, just run
-ENTRYPOINT ["/opt/keycloak/bin/kc.sh", "start-dev", "--http-port=${PORT:-8080}", "--hostname-strict=false", "--http-enabled=true"]
+# Keycloak'ı başlat
+CMD ["-b", "0.0.0.0", "-Djboss.http.port=${PORT:-8080}"]
