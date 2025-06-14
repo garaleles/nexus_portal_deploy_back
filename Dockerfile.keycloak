@@ -1,9 +1,20 @@
 FROM quay.io/keycloak/keycloak:26.0.0
 
-# Environment variables
+# Build-time environment variables
+ENV KC_DB=postgres
+ENV KC_FEATURES=token-exchange,admin-fine-grained-authz
+
+# Build the optimized image
+RUN /opt/keycloak/bin/kc.sh build
+
+# Runtime environment variables
 ENV KC_DB_URL=postgresql://business_portal_man_db_ja2o_user:h9L7KJokhPgWEvtnO6R4VIslSdGjGDiH@dpg-d15ebjnfte5s7394fjhg-a:5432/business_portal_man_db_ja2o
 ENV KC_DB_USERNAME=business_portal_man_db_ja2o_user
 ENV KC_DB_PASSWORD=h9L7KJokhPgWEvtnO6R4VIslSdGjGDiH
+ENV KC_HOSTNAME_STRICT=false
+ENV KC_HTTP_ENABLED=true
+ENV KC_PROXY_HEADERS=xforwarded
+ENV KC_HTTP_PORT=${PORT:-8080}
 
-# Start in development mode - no build needed
-ENTRYPOINT ["/opt/keycloak/bin/kc.sh", "start-dev"]
+# Start command
+ENTRYPOINT ["/opt/keycloak/bin/kc.sh", "start", "--optimized"]
