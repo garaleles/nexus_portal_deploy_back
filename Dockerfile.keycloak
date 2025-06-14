@@ -1,7 +1,7 @@
 FROM quay.io/keycloak/keycloak:15.0.2
 
-# Memory optimized JVM settings for Render.com
-ENV JAVA_OPTS="-Xms128m -Xmx256m -XX:MetaspaceSize=96m -XX:MaxMetaspaceSize=128m -Djava.net.preferIPv4Stack=true -Dcom.arjuna.ats.arjuna.coordinator.defaultTimeout=300"
+# FIXED: Memory settings for Render.com - increased metaspace
+ENV JAVA_OPTS="-Xms64m -Xmx300m -XX:MetaspaceSize=128m -XX:MaxMetaspaceSize=256m -Djava.net.preferIPv4Stack=true -XX:+UseG1GC -XX:MaxGCPauseMillis=100"
 
 # Database configuration
 ENV DB_VENDOR=postgres
@@ -21,17 +21,5 @@ ENV PROXY_ADDRESS_FORWARDING=true
 # Port
 EXPOSE 8080
 
-# Switch to root to create the FINAL entrypoint
-USER root
-RUN echo '#!/bin/sh' > /opt/jboss/final-entrypoint.sh && \
-    echo '# BYPASS docker-entrypoint.sh - direct standalone.sh call' >> /opt/jboss/final-entrypoint.sh && \
-    echo 'cd /opt/jboss/keycloak' >> /opt/jboss/final-entrypoint.sh && \
-    echo 'exec bin/standalone.sh -b 0.0.0.0 -Djboss.http.port=${PORT:-8080}' >> /opt/jboss/final-entrypoint.sh && \
-    chown jboss:jboss /opt/jboss/final-entrypoint.sh && \
-    chmod +x /opt/jboss/final-entrypoint.sh
-
-# Switch back to the non-root user
-USER jboss
-
-# FINAL ENTRYPOINT - bypass docker-entrypoint.sh completely
-ENTRYPOINT ["/opt/jboss/final-entrypoint.sh"]
+# SIMPLE entrypoint - no complex scripts
+CMD ["/opt/jboss/keycloak/bin/standalone.sh", "-b", "0.0.0.0", "-Djboss.http.port=${PORT:-8080}"]
