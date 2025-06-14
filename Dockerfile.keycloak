@@ -8,8 +8,6 @@ COPY cache-ispn-local.xml /opt/keycloak/conf/cache-ispn-local.xml
 ENV KC_DB=postgres
 ENV KC_FEATURES="token-exchange,admin-fine-grained-authz"
 ENV KC_HTTP_ENABLED=true
-ENV KC_HEALTH_ENABLED=true
-ENV KC_METRICS_ENABLED=true
 ENV KC_LOG_LEVEL=INFO
 
 # Cache ayarları
@@ -40,7 +38,7 @@ RUN /opt/keycloak/bin/kc.sh build
 EXPOSE $PORT
 
 HEALTHCHECK --interval=60s --timeout=15s --start-period=120s --retries=5 \
-  CMD curl -f http://localhost:$PORT/health/ready || exit 1
+  CMD curl -f http://localhost:$PORT/ || exit 1
 
 # Start with memory-optimized settings and HTTPS proxy settings
 ENTRYPOINT ["/opt/keycloak/bin/kc.sh", "start", "--verbose", "--proxy=edge", "--hostname-strict=false", "--hostname-strict-https=false"]
