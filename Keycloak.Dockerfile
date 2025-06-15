@@ -3,7 +3,7 @@ FROM quay.io/keycloak/keycloak:23.0
 
 # Gerekli paketler ve realm import için hazırlık
 USER root
-RUN microdnf install -y curl && microdnf clean all
+RUN dnf install -y curl && dnf clean all
 WORKDIR /opt/keycloak
 
 # Realm yapılandırma dosyasını kopyala
