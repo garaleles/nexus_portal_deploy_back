@@ -30,5 +30,5 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=120s --retries=5 \
     CMD curl -f http://localhost:8080/health/ready || exit 1
 
 # Keycloak'ı başlat
-ENTRYPOINT ["/opt/keycloak/bin/kc.sh"]
-CMD ["start"] 
+ENTRYPOINT ["/bin/sh", "-c"]
+CMD ["echo '--- Ortam Değişkenleri ---' && env | grep KC_ && echo '--- Keycloak Başlatılıyor ---' && /opt/keycloak/bin/kc.sh start"] 
