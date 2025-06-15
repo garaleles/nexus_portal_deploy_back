@@ -6,9 +6,8 @@ USER root
 RUN microdnf install -y curl && microdnf clean all
 
 # Railway için environment variables
-ENV KC_HTTP_ENABLED=true
-ENV KC_HOSTNAME_STRICT=false  
-ENV KC_HOSTNAME_STRICT_HTTPS=false
+# KC_HOSTNAME, Railway servis ayarlarında ortam değişkeni olarak ayarlanmalıdır.
+# Örnek: KC_HOSTNAME=my-keycloak-service.up.railway.app
 ENV KC_PROXY=edge
 ENV KC_DB=postgres
 ENV KC_HEALTH_ENABLED=true
@@ -32,4 +31,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=120s --retries=5 \
 
 # Keycloak'ı başlat
 ENTRYPOINT ["/opt/keycloak/bin/kc.sh"]
-CMD ["start", "--http-enabled=true", "--proxy=edge", "--hostname-strict=false"] 
+CMD ["start"] 
