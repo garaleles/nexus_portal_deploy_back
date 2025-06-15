@@ -22,57 +22,94 @@ export class InitializationService implements OnModuleInit {
   async onModuleInit() {
     this.logger.log("🚀 Portal initialization başlatılıyor...");
 
+    // Keycloak olmadan da uygulama başlayabilir
+    const keycloakUrl = this.configService.get<string>('KEYCLOAK_URL');
+
+    if (!keycloakUrl) {
+      this.logger.warn("⚠️ KEYCLOAK_URL bulunamadı, Keycloak initialization atlanıyor");
+      await this.initializeWithoutKeycloak();
+      return;
+    }
+
     try {
-      // Keycloak'ın hazır olmasını bekle
-      await this.waitForKeycloak();
+      // Keycloak'ın hazır olmasını bekle - ama başarısız olursa uygulamayı durdurma
+      const keycloakReady = await this.checkKeycloakConnection();
 
-      // Rolleri kontrol et ve oluştur
-      await this.initializeRoles();
-
-      // Client mappers'ları kontrol et ve oluştur
-      await this.initializeClientMappers();
-
-      // Super admin rollerini güncelle
-      await this.updateSuperAdminRoles();
-
-      // Endpoint'leri seed et
-      await this.initializeEndpoints();
-
-      // Rol izinlerini seed et
-      await this.initializeRolePermissions();
-
-      // Kurumsal sayfaları initialize et
-      await this.initializeCorporatePages();
+      if (keycloakReady) {
+        await this.initializeWithKeycloak();
+      } else {
+        this.logger.warn("⚠️ Keycloak bağlantısı kurulamadı, minimum initialization yapılıyor");
+        await this.initializeWithoutKeycloak();
+      }
 
       this.logger.log("✅ Portal initialization tamamlandı!");
 
     } catch (error) {
       this.logger.error("❌ Portal initialization hatası:", error.message);
-      // Hata durumunda uygulamayı durdurma, sadece log'la
-      this.logger.warn("⚠️ Uygulama initialization hatalarına rağmen devam ediyor...");
+      // Hata durumunda da minimum initialization yap
+      await this.initializeWithoutKeycloak();
+      this.logger.warn("⚠️ Uygulama minimum konfigürasyon ile devam ediyor...");
     }
   }
 
-  private async waitForKeycloak(maxRetries = 10, delay = 3000): Promise<void> {
-    this.logger.log("Keycloak bağlantısı kontrol ediliyor...");
+  private async checkKeycloakConnection(maxRetries = 3, delay = 2000): Promise<boolean> {
+    this.logger.log("🔍 Keycloak bağlantısı kontrol ediliyor...");
 
     for (let i = 0; i < maxRetries; i++) {
       try {
-        // Basit bir test ile Keycloak'ın çalışıp çalışmadığını kontrol et
-        await this.rolesSeeder.seedRoles();
+        await this.rolesSeeder.testConnection();
         this.logger.log("✅ Keycloak bağlantısı başarılı");
-        return;
+        return true;
       } catch (error) {
-        this.logger.warn(`Keycloak bağlantı denemesi ${i + 1}/${maxRetries} başarısız: ${error.message}`);
+        this.logger.warn(`❌ Keycloak bağlantı denemesi ${i + 1}/${maxRetries}: ${error.message}`);
 
         if (i < maxRetries - 1) {
-          this.logger.log(`${delay}ms bekleyip tekrar deneniyor...`);
           await new Promise(resolve => setTimeout(resolve, delay));
         }
       }
     }
 
-    throw new Error("Keycloak bağlantısı kurulamadı");
+    this.logger.warn("⚠️ Keycloak bağlantısı kurulamadı");
+    return false;
+  }
+
+  private async initializeWithKeycloak() {
+    this.logger.log("🔑 Keycloak ile full initialization başlatılıyor...");
+
+    // Rolleri kontrol et ve oluştur
+    await this.initializeRoles();
+
+    // Client mappers'ları kontrol et ve oluştur
+    await this.initializeClientMappers();
+
+    // Super admin rollerini güncelle
+    await this.updateSuperAdminRoles();
+
+    // Endpoint'leri seed et
+    await this.initializeEndpoints();
+
+    // Rol izinlerini seed et
+    await this.initializeRolePermissions();
+
+    // Kurumsal sayfaları initialize et
+    await this.initializeCorporatePages();
+  }
+
+  private async initializeWithoutKeycloak() {
+    this.logger.log("📊 Keycloak olmadan minimum initialization başlatılıyor...");
+
+    try {
+      // Endpoint'leri seed et
+      await this.initializeEndpoints();
+      this.logger.log("✅ Endpoints initialized");
+
+      // Kurumsal sayfaları initialize et
+      await this.initializeCorporatePages();
+      this.logger.log("✅ Corporate pages initialized");
+
+    } catch (error) {
+      this.logger.error("❌ Minimum initialization hatası:", error.message);
+    }
   }
 
   private async initializeRoles(): Promise<void> {

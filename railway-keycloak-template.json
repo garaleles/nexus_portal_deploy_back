@@ -1,0 +1,31 @@
+{
+  "$schema": "https://railway.app/railway.schema.json",
+  "build": {
+    "builder": "DOCKERFILE",
+    "dockerfilePath": "Keycloak.Dockerfile"
+  },
+  "deploy": {
+    "numReplicas": 1,
+    "sleepApplication": false,
+    "restartPolicyType": "ON_FAILURE"
+  },
+  "environment": {
+    "KEYCLOAK_ADMIN": "admin",
+    "KEYCLOAK_ADMIN_PASSWORD": "SuperSecure123!",
+    "KC_PROXY": "edge",
+    "KC_HOSTNAME_STRICT": "false",
+    "KC_HOSTNAME_STRICT_HTTPS": "false", 
+    "KC_HTTP_ENABLED": "true",
+    "KC_DB": "postgres",
+    "KC_DB_URL": "jdbc:postgresql://${{Postgres.PGHOST}}:${{Postgres.PGPORT}}/${{Postgres.PGDATABASE}}",
+    "KC_DB_USERNAME": "${{Postgres.PGUSER}}",
+    "KC_DB_PASSWORD": "${{Postgres.PGPASSWORD}}",
+    "KC_HEALTH_ENABLED": "true",
+    "KC_METRICS_ENABLED": "true",
+    "PORT": "8080",
+    "JAVA_OPTS": "-Xms512m -Xmx1024m"
+  },
+  "healthcheckPath": "/health/ready",
+  "healthcheckTimeout": 300,
+  "regions": ["us-west1"]
+} 

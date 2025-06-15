@@ -63,6 +63,16 @@ export class RolesSeeder {
     },
   ];
 
+  async testConnection(): Promise<void> {
+    try {
+      await this.authenticateAdmin();
+      this.logger.log('✅ Keycloak bağlantı test başarılı');
+    } catch (error) {
+      this.logger.error('❌ Keycloak bağlantı test başarısız:', error.message);
+      throw error;
+    }
+  }
+
   async seedRoles(): Promise<void> {
     try {
       this.logger.log('Keycloak role seeding başlatılıyor...');

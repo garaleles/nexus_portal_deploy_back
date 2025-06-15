@@ -1,35 +1,41 @@
-# Simple single-stage Dockerfile for Railway
+# Railway için optimize edilmiş Dockerfile
 FROM node:20-alpine
 
-# Install dumb-init
-RUN apk add --no-cache dumb-init
+# Sistem güncellemeleri ve gerekli paketler
+RUN apk add --no-cache dumb-init curl
 
-# Set working directory
+# Çalışma dizini
 WORKDIR /app
 
-# Copy package files
-COPY package*.json ./
+# Kullanıcı oluştur
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S nestjs -u 1001
 
-# Install dependencies with legacy peer deps support
+# Package dosyalarını kopyala
+COPY --chown=nestjs:nodejs package*.json ./
+
+# Bağımlılıkları yükle
 RUN npm install --legacy-peer-deps && npm cache clean --force
 
-# Copy source code
-COPY . .
+# Kaynak kodunu kopyala
+COPY --chown=nestjs:nodejs . .
 
-# Build the application
+# Uygulamayı build et
 RUN npm run build
 
-# Create non-root user
-RUN addgroup -g 1001 -S nodejs && \
-    adduser -S nestjs -u 1001 && \
-    chown -R nestjs:nodejs /app
+# Kullanıcı izinlerini düzelt
+RUN chown -R nestjs:nodejs /app
 
-# Switch to non-root user
+# Non-root kullanıcıya geç
 USER nestjs
 
-# Expose port
+# Port
 EXPOSE 3000
 
-# Start the application
+# Health check ekle
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:3000/api/health || exit 1
+
+# Uygulama başlat
 ENTRYPOINT ["dumb-init", "--"]
 CMD ["npm", "run", "start:prod"] 
