@@ -19,7 +19,13 @@ interface ConnectedClient {
 
 @WSGateway({
   cors: {
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    origin: process.env.NODE_ENV === 'production'
+      ? [
+        process.env.FRONTEND_URL,
+        'https://business-portal-frontend-production.up.railway.app',
+        'https://*.up.railway.app'
+      ]
+      : ['http://localhost:4200', 'http://localhost:3000'],
     credentials: true,
   },
   namespace: '/',

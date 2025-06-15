@@ -26,8 +26,8 @@
   "oauth2DeviceCodeLifespan": 600,
   "oauth2DevicePollingInterval": 5,
   "attributes": {
-    "frontendUrl": "https://business-portal-keycloak.onrender.com",
-    "adminUrl": "https://business-portal-keycloak.onrender.com"
+    "frontendUrl": "https://business-portal-keycloak-production.up.railway.app",
+    "adminUrl": "https://business-portal-keycloak-production.up.railway.app"
   },
   "clients": [
     {
@@ -38,13 +38,13 @@
       "clientAuthenticatorType": "client-secret",
       "secret": "TG322sLDeWwxlL6CzoeZPSilL3kytTww",
       "redirectUris": [
-        "https://business-portal-frontend.onrender.com/*",
-        "https://business-portal-frontend.onrender.com/auth/callback",
-        "https://business-portal-frontend.onrender.com/assets/silent-check-sso.html",
+        "https://business-portal-frontend-production.up.railway.app/*",
+        "https://business-portal-frontend-production.up.railway.app/auth/callback",
+        "https://business-portal-frontend-production.up.railway.app/assets/silent-check-sso.html",
         "http://localhost:4200/*"
       ],
       "webOrigins": [
-        "https://business-portal-frontend.onrender.com",
+        "https://business-portal-frontend-production.up.railway.app",
         "http://localhost:4200",
         "+"
       ],
@@ -232,7 +232,7 @@
     "xContentTypeOptions": "nosniff",
     "xRobotsTag": "none",
     "xFrameOptions": "SAMEORIGIN",
-    "contentSecurityPolicy": "frame-src 'self' https://*.onrender.com; frame-ancestors 'self' https://*.onrender.com; object-src 'none';",
+    "contentSecurityPolicy": "frame-src 'self' https://*.up.railway.app; frame-ancestors 'self' https://*.up.railway.app; object-src 'none';",
     "xXSSProtection": "1; mode=block",
     "strictTransportSecurity": "max-age=31536000; includeSubDomains"
   },

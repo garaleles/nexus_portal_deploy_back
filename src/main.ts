@@ -13,13 +13,19 @@ async function bootstrap() {
     // Global prefixes
     app.setGlobalPrefix('api');
 
-    // CORS ayarları
+    // CORS ayarları - Railway deployment için
     app.enableCors({
         origin: process.env.NODE_ENV === 'production'
-            ? process.env.FRONTEND_URL
+            ? [
+                process.env.FRONTEND_URL,
+                'https://business-portal-frontend-production.up.railway.app',
+                'https://*.up.railway.app'
+            ]
             : ['http://localhost:4200', 'http://127.0.0.1:4200'],
         methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
         credentials: true,
+        allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+        exposedHeaders: ['Authorization'],
     });
 
     // Güvenlik önlemleri

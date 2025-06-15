@@ -22,7 +22,7 @@ export default registerAs('database', (): TypeOrmModuleOptions => {
 
     logger.log('🔄 Attempting to connect to PostgreSQL database...');
 
-    // Render.com için Internal Database URL kullanımı (makale önerisi)
+    // Railway için Internal Database URL kullanımı
     const databaseUrl = process.env.DATABASE_URL;
 
     if (databaseUrl) {
@@ -36,16 +36,16 @@ export default registerAs('database', (): TypeOrmModuleOptions => {
             synchronize: process.env.NODE_ENV !== 'production',
             logging: false,
 
-            // Render.com için başlangıç retry stratejisi
+            // Railway için başlangıç retry stratejisi
             retryAttempts: 10,
             retryDelay: 3000,
 
-            // Render.com için SSL yapılandırması (makale kritik önerisi)
+            // Railway için SSL yapılandırması
             ssl: {
-                rejectUnauthorized: false  // Render'ın internal CA için gerekli
+                rejectUnauthorized: false  // Railway'in internal CA için gerekli
             },
 
-            // Render.com için proactive connection pool management
+            // Railway için proactive connection pool management
             extra: {
                 // Connection Pool Ayarları (Makale Tablo 2)
                 max: 20,                    // Veritabanı planına göre ayarla
@@ -54,7 +54,7 @@ export default registerAs('database', (): TypeOrmModuleOptions => {
                 connectionTimeoutMillis: 10000,  // 10 saniye bağlantı timeout
                 acquireTimeoutMillis: 10000,     // Pool'dan bağlantı alma timeout
 
-                // Render network için ek ayarlar
+                // Railway network için ek ayarlar
                 statement_timeout: 60000,         // 60 saniye query timeout
                 query_timeout: 60000,            // 60 saniye query timeout
                 application_name: 'Nexus Business Portal API',
@@ -91,16 +91,16 @@ export default registerAs('database', (): TypeOrmModuleOptions => {
             synchronize: process.env.NODE_ENV !== 'production',
             logging: false,
 
-            // Render.com için başlangıç retry stratejisi
+            // Railway için başlangıç retry stratejisi
             retryAttempts: 10,
             retryDelay: 3000,
 
-            // Render.com için SSL yapılandırması
+            // Railway için SSL yapılandırması
             ssl: {
                 rejectUnauthorized: false
             },
 
-            // Render.com için connection pool
+            // Railway için connection pool
             extra: {
                 max: 20,
                 min: 0,
