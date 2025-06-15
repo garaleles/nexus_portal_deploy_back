@@ -1,9 +1,8 @@
 # Railway için optimize edilmiş Keycloak Dockerfile
 FROM quay.io/keycloak/keycloak:23.0
 
-# Gerekli paketler ve realm import için hazırlık
+# Gerekli hazırlıklar
 USER root
-RUN dnf install -y curl && dnf clean all
 WORKDIR /opt/keycloak
 
 # Realm yapılandırma dosyasını kopyala
@@ -26,10 +25,6 @@ RUN /opt/keycloak/bin/kc.sh build
 
 # Port expose
 EXPOSE 8080
-
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=120s --retries=5 \
-    CMD curl -f http://localhost:8080/health/ready || exit 1
 
 # Keycloak'ı başlat
 # --import-realm flag'i sayesinde başlangıçta realm'i içe aktaracak.
