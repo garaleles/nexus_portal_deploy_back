@@ -170,3 +170,5 @@ Herhangi bir sorun durumunda:
 - Railway deployment loglarını kontrol edin
 - Environment variables ayarlarını doğrulayın
 - GitHub Issues üzerinden destek talep edin 
+
+<!-- Trigger for Railway deployment --> 
