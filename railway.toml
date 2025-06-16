@@ -25,7 +25,7 @@ DB_DATABASE = "${{Postgres.PGDATABASE}}"
 JWT_SECRET = "your-super-secure-jwt-secret-min-32-chars-here!"
 
 # Railway Internal Network - ORJINAL ÇALIŞAN YAPILANDIRMA
-KEYCLOAK_URL = "http://business-portal-keycloak.railway.internal:8080"
+KEYCLOAK_URL = "http://keycloack.railway.internal:8080"
 KEYCLOAK_REALM = "nexus-portal"  
 KEYCLOAK_CLIENT_ID = "business-portal"
 KEYCLOAK_CLIENT_SECRET = "lmv5iNnI0H1RyG4oyVCcCYJeqv3vahct"
