@@ -40,6 +40,7 @@ export class KeycloakService {
       this.logger.log(`👤 Username: ${username}`);
       this.logger.log(`🔑 Password exists: ${!!password}`);
 
+      // Master realm'de authenticate ol
       await this.kcAdminClient.auth({
         username: username,
         password: password,
@@ -51,6 +52,7 @@ export class KeycloakService {
       this.initialized = true;
     } catch (error) {
       this.logger.error(`❌ Keycloak Admin Client kimlik doğrulaması başarısız:`, error.message);
+      this.logger.error(`🔍 Hata detayı:`, error);
       this.initialized = false;
       throw error; // Hatayı yukarı fırlat
     }

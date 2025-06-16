@@ -21,8 +21,25 @@ export class EmailConfigSeeder {
         const encryptionKey = this.configService.get<string>('ENCRYPTION_KEY') || 'default-key-must-be-32-chars-in-length!';
         const encryptionIv = this.configService.get<string>('ENCRYPTION_IV') || 'default-iv-16chrs';
 
-        this.key = Buffer.from(encryptionKey);
-        this.iv = Buffer.from(encryptionIv);
+        // Key 32 byte (256 bit) olmalı
+        if (encryptionKey.length !== 32) {
+            const paddedKey = encryptionKey.padEnd(32, '0').substring(0, 32);
+            this.key = Buffer.from(paddedKey);
+            console.warn(`⚠️ ENCRYPTION_KEY 32 karakter olmalı, padding uygulandı: ${paddedKey}`);
+        } else {
+            this.key = Buffer.from(encryptionKey);
+        }
+
+        // IV 16 byte olmalı
+        if (encryptionIv.length !== 16) {
+            const paddedIv = encryptionIv.padEnd(16, '0').substring(0, 16);
+            this.iv = Buffer.from(paddedIv);
+            console.warn(`⚠️ ENCRYPTION_IV 16 karakter olmalı, padding uygulandı: ${paddedIv}`);
+        } else {
+            this.iv = Buffer.from(encryptionIv);
+        }
+
+        console.log(`🔐 Encryption Key Length: ${this.key.length}, IV Length: ${this.iv.length}`);
     }
 
     async seed(): Promise<void> {
@@ -64,9 +81,20 @@ export class EmailConfigSeeder {
      * @param text Şifrelenecek metin
      */
     private encrypt(text: string): string {
-        const cipher = crypto.createCipheriv(this.algorithm, this.key, this.iv);
-        let encrypted = cipher.update(text, 'utf8', 'hex');
-        encrypted += cipher.final('hex');
-        return encrypted;
+        if (!text) {
+            console.warn('⚠️ Encrypt edilecek text boş, boş string döndürülüyor');
+            return '';
+        }
+
+        try {
+            const cipher = crypto.createCipheriv(this.algorithm, this.key, this.iv);
+            let encrypted = cipher.update(text, 'utf8', 'hex');
+            encrypted += cipher.final('hex');
+            return encrypted;
+        } catch (error) {
+            console.error('❌ Encryption hatası:', error.message);
+            console.error('🔍 Key length:', this.key.length, 'IV length:', this.iv.length);
+            throw error;
+        }
     }
 }
