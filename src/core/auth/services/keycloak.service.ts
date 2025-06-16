@@ -12,8 +12,11 @@ export class KeycloakService {
   private initialized: boolean = false;
 
   constructor(private configService: ConfigService) {
+    // Primary URL ile başla
+    const primaryUrl = this.configService.get<string>('KEYCLOAK_URL');
+
     this.kcAdminClient = new KcAdminClient({
-      baseUrl: this.configService.get<string>('KEYCLOAK_URL'),
+      baseUrl: primaryUrl,
       realmName: 'master', // Admin işlemleri için master realm
     });
 
@@ -22,22 +25,56 @@ export class KeycloakService {
   }
 
   private async authenticateWithRetry(maxRetries: number = 3, delay: number = 5000) {
+    const primaryUrl = this.configService.get<string>('KEYCLOAK_URL');
+    const fallbackUrl = this.configService.get<string>('KEYCLOAK_PUBLIC_URL');
+
+    // Önce primary URL ile dene
     for (let i = 0; i < maxRetries; i++) {
       try {
+        this.logger.log(`🔄 Keycloak authentication denemesi ${i + 1}/${maxRetries} - Primary URL: ${primaryUrl}`);
         await this.authenticateAdminClient();
+        this.logger.log(`✅ Keycloak authentication başarılı (${i + 1}/${maxRetries}) - Primary URL`);
         return; // Başarılı oldu, döngüden çık
       } catch (error) {
-        this.logger.warn(`❌ Keycloak authentication denemesi ${i + 1}/${maxRetries} başarısız`);
+        this.logger.warn(`❌ Primary URL authentication denemesi ${i + 1}/${maxRetries} başarısız: ${error.message}`);
 
-        if (i === maxRetries - 1) {
-          this.logger.error(`❌ Tüm authentication denemeleri başarısız oldu`);
-          throw error;
+        if (i < maxRetries - 1) {
+          this.logger.log(`⏳ ${delay}ms bekleyip tekrar denenecek...`);
+          await new Promise(resolve => setTimeout(resolve, delay));
         }
-
-        this.logger.log(`⏳ ${delay}ms bekleyip tekrar denenecek...`);
-        await new Promise(resolve => setTimeout(resolve, delay));
       }
     }
+
+    // Primary URL başarısız olursa fallback URL'i dene
+    if (fallbackUrl && fallbackUrl !== primaryUrl) {
+      this.logger.log(`🔄 Fallback URL ile deneniyor: ${fallbackUrl}`);
+
+      // Fallback URL ile yeni client instance
+      this.kcAdminClient = new KcAdminClient({
+        baseUrl: fallbackUrl,
+        realmName: 'master',
+      });
+
+      for (let i = 0; i < maxRetries; i++) {
+        try {
+          this.logger.log(`🔄 Fallback URL authentication denemesi ${i + 1}/${maxRetries}`);
+          await this.authenticateAdminClient();
+          this.logger.log(`✅ Keycloak authentication başarılı - Fallback URL kullanılıyor`);
+          return;
+        } catch (error) {
+          this.logger.warn(`❌ Fallback URL authentication denemesi ${i + 1}/${maxRetries} başarısız: ${error.message}`);
+
+          if (i < maxRetries - 1) {
+            this.logger.log(`⏳ ${delay}ms bekleyip tekrar denenecek...`);
+            await new Promise(resolve => setTimeout(resolve, delay));
+          }
+        }
+      }
+    }
+
+    this.logger.error(`❌ Tüm Keycloak authentication denemeleri başarısız oldu`);
+    // Uygulama çalışmaya devam etsin, sadece Keycloak authentication çalışmasın
+    this.initialized = false;
   }
 
   async authenticateAdminClient() {

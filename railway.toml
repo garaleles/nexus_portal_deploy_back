@@ -7,7 +7,7 @@ numReplicas = 1
 sleepApplication = false
 restartPolicyType = "ON_FAILURE"
 healthcheckPath = "/api/health"
-healthcheckTimeout = 300
+healthcheckTimeout = 600
 
 [environments.production.variables]
 NODE_ENV = "production"
@@ -24,10 +24,13 @@ DB_DATABASE = "${{Postgres.PGDATABASE}}"
 # JWT Configuration
 JWT_SECRET = "your-super-secure-jwt-secret-min-32-chars-here!"
 
-# ⚠️ Railway Internal Network - ÇALIŞIYOR!
+# Railway Internal Network - Primary
 KEYCLOAK_URL = "http://business-portal-keycloak.railway.internal:8080"
+# Fallback URL - Public domain (cold start durumunda)
+KEYCLOAK_PUBLIC_URL = "https://business-portal-keycloak-production.up.railway.app"
 KEYCLOAK_REALM = "nexus-portal"  
 KEYCLOAK_CLIENT_ID = "business-portal"
+KEYCLOAK_CLIENT_SECRET = "jqoXGSxdIoFpouOf8uHtKsyjyzO3M4jf"
 KEYCLOAK_ADMIN_USERNAME = "admin"
 KEYCLOAK_ADMIN_PASSWORD = "SuperSecure123!"
 
