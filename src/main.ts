@@ -60,7 +60,7 @@ async function bootstrap() {
         const port = process.env.PORT || 3000;
         await app.listen(port, '0.0.0.0');
 
-        logger.log(`🚀 Application is running on port ${port} - v1.0.1`);
+        logger.log(`🚀 Application is running on port ${port} - v1.0.2 - TENANT_FIX`);
         logger.log(`🔗 Application URL: ${await app.getUrl()}`);
         logger.log(`❤️ Health check available at: ${await app.getUrl()}/api/health`);
 

@@ -27,9 +27,20 @@ export class TenantMiddleware implements NestMiddleware {
 
   async use(req: TenantRequest, res: Response, next: NextFunction) {
     try {
-      // Public endpoint kontrolü
-      if (req.url.includes('/api/public/')) {
-        this.logger.log('🌐 PUBLIC_ENDPOINT - Tenant kontrolü bypass ediliyor');
+      // Public endpoint ve platform endpoint kontrolü
+      if (req.url.includes('/api/public/') ||
+        req.url.includes('/api/health') ||
+        req.url.includes('/health') ||
+        req.url === '/' ||
+        req.url.includes('/api/platform-admin/')) {
+        this.logger.log('🌐 PLATFORM_ENDPOINT - Tenant kontrolü bypass ediliyor');
+        return next();
+      }
+
+      // Backend URL'si kendisine istek atıyorsa bypass et
+      const host = req.headers.host;
+      if (host && (host.includes('business-portal-backend') || host.includes('backend'))) {
+        this.logger.log('🔧 BACKEND_SELF_REQUEST - Tenant kontrolü bypass ediliyor');
         return next();
       }
 

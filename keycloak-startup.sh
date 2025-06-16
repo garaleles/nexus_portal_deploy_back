@@ -18,4 +18,6 @@ echo "✅ PostgreSQL hazır!"
 
 # Keycloak'u başlat
 echo "🔐 Keycloak başlatılıyor..."
-/opt/keycloak/bin/kc.sh start --optimized --import-realm --spi-truststore-file-disabled=true 
+/opt/keycloak/bin/kc.sh start --optimized --import-realm \
+  --spi-truststore-file-disabled=true \
+  --spi-connections-http-client-default-disable-trust-manager=true 
