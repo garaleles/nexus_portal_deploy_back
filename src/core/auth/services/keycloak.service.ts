@@ -23,10 +23,16 @@ export class KeycloakService {
     try {
       const username = this.configService.get<string>('KEYCLOAK_ADMIN_USERNAME');
       const password = this.configService.get<string>('KEYCLOAK_ADMIN_PASSWORD');
+      const keycloakUrl = this.configService.get<string>('KEYCLOAK_URL');
 
-      this.logger.debug(`Keycloak Admin Auth - Username: ${username}`);
-      this.logger.debug(`Keycloak Admin Auth - Password exists: ${!!password}`);
-      this.logger.debug(`Keycloak Admin Auth - URL: ${this.configService.get<string>('KEYCLOAK_URL')}`);
+      this.logger.log(`🔐 Keycloak Admin Auth Başlatılıyor...`);
+      this.logger.log(`📍 URL: ${keycloakUrl}`);
+      this.logger.log(`👤 Username: ${username}`);
+      this.logger.log(`🔑 Password exists: ${!!password}`);
+      this.logger.log(`🔑 Password length: ${password?.length || 0}`);
+
+      // URL test
+      this.logger.log(`🌐 Keycloak URL test ediliyor: ${keycloakUrl}/health/ready`);
 
       await this.kcAdminClient.auth({
         username: username,
@@ -34,11 +40,15 @@ export class KeycloakService {
         clientId: 'admin-cli',
         grantType: 'password',
       });
-      this.logger.log(`Keycloak Admin Client başarıyla kimlik doğrulandı.`);
+      this.logger.log(`✅ Keycloak Admin Client başarıyla kimlik doğrulandı.`);
       this.initialized = true;
     } catch (error) {
-      this.logger.error(`Keycloak Admin Client kimlik doğrulaması başarısız oldu:`, error.message);
-      this.logger.error(`Error response:`, error.response?.data || error);
+      this.logger.error(`❌ Keycloak Admin Client kimlik doğrulaması başarısız oldu:`, error.message);
+      this.logger.error(`🔍 Error stack:`, error.stack);
+      this.logger.error(`📋 Error response:`, error.response?.data || error);
+      this.logger.error(`🌐 Keycloak URL:`, this.configService.get<string>('KEYCLOAK_URL'));
+      this.logger.error(`👤 Username:`, this.configService.get<string>('KEYCLOAK_ADMIN_USERNAME'));
+      this.logger.error(`🔑 Password exists:`, !!this.configService.get<string>('KEYCLOAK_ADMIN_PASSWORD'));
       this.initialized = false;
       throw new InternalServerErrorException(`Keycloak Admin Client kimlik doğrulaması yapılamadı.`);
     }
