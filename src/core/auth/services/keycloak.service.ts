@@ -4,6 +4,7 @@ import KcAdminClient from '@keycloak/keycloak-admin-client';
 import UserRepresentation from '@keycloak/keycloak-admin-client/lib/defs/userRepresentation';
 import CredentialRepresentation from '@keycloak/keycloak-admin-client/lib/defs/credentialRepresentation';
 import { RequiredActionAlias } from '@keycloak/keycloak-admin-client/lib/defs/requiredActionProviderRepresentation';
+import axios from 'axios';
 
 @Injectable()
 export class KeycloakService {
@@ -49,33 +50,32 @@ export class KeycloakService {
       // ÖNCE DIRECT HTTP CALL İLE TEST ET
       this.logger.log(`🧪 Direct HTTP call ile test ediliyor...`);
 
-      // Node.js SSL sertifika doğrulamasını geçici olarak devre dışı bırak
-      process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
-
-      const response = await fetch(testUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: new URLSearchParams({
+      try {
+        const response = await axios.post(testUrl, new URLSearchParams({
           grant_type: 'password',
           client_id: 'admin-cli',
           username: username,
           password: password,
-        }),
-      });
+        }), {
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          timeout: 10000, // 10 saniye timeout
+        });
 
-      this.logger.log(`📡 HTTP Response Status: ${response.status}`);
-      this.logger.log(`📡 HTTP Response OK: ${response.ok}`);
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        this.logger.error(`📡 HTTP Error Response: ${errorText}`);
-        throw new Error(`HTTP ${response.status}: ${errorText}`);
+        this.logger.log(`📡 AXIOS Response Status: ${response.status}`);
+        this.logger.log(`📡 AXIOS Response Data:`, response.data);
+        this.logger.log(`✅ AXIOS call başarılı! Token alındı.`);
+      } catch (axiosError) {
+        this.logger.error(`🚨 AXIOS ERROR DETAYI:`, axiosError);
+        this.logger.error(`🚨 AXIOS ERROR MESSAGE:`, axiosError.message);
+        this.logger.error(`🚨 AXIOS ERROR CODE:`, axiosError.code);
+        if (axiosError.response) {
+          this.logger.error(`🚨 AXIOS RESPONSE STATUS:`, axiosError.response.status);
+          this.logger.error(`🚨 AXIOS RESPONSE DATA:`, axiosError.response.data);
+        }
+        throw axiosError;
       }
-
-      const tokenData = await response.json();
-      this.logger.log(`✅ Direct HTTP call başarılı! Token alındı.`);
 
       // ŞIMDI KEYCLOAK ADMIN CLIENT İLE DENE
       await this.kcAdminClient.auth({
