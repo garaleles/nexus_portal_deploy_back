@@ -15,7 +15,28 @@ export class KeycloakService {
       baseUrl: this.configService.get<string>('KEYCLOAK_URL'),
       realmName: 'master', // Admin işlemleri için master realm
     });
-    this.authenticateAdminClient();
+
+    // Retry mechanism ile authentication
+    this.authenticateWithRetry();
+  }
+
+  private async authenticateWithRetry(maxRetries: number = 3, delay: number = 5000) {
+    for (let i = 0; i < maxRetries; i++) {
+      try {
+        await this.authenticateAdminClient();
+        return; // Başarılı oldu, döngüden çık
+      } catch (error) {
+        this.logger.warn(`❌ Keycloak authentication denemesi ${i + 1}/${maxRetries} başarısız`);
+
+        if (i === maxRetries - 1) {
+          this.logger.error(`❌ Tüm authentication denemeleri başarısız oldu`);
+          throw error;
+        }
+
+        this.logger.log(`⏳ ${delay}ms bekleyip tekrar denenecek...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
+    }
   }
 
   async authenticateAdminClient() {
@@ -37,18 +58,76 @@ export class KeycloakService {
       try {
         const response = await fetch(`${keycloakUrl}/health/ready`);
         this.logger.log(`✅ Keycloak health check: ${response.status}`);
+
+        // Eğer 404 alıyorsa, alternatif endpoint'leri dene
+        if (response.status === 404) {
+          this.logger.warn(`❌ /health/ready endpoint bulunamadı, alternatif endpoint'ler deneniyor...`);
+
+          // Basit admin console endpoint'i dene
+          const adminResponse = await fetch(`${keycloakUrl}/admin/`);
+          this.logger.log(`🔍 Admin console check: ${adminResponse.status}`);
+
+          // Root endpoint'i dene
+          const rootResponse = await fetch(`${keycloakUrl}/`);
+          this.logger.log(`🔍 Root endpoint check: ${rootResponse.status}`);
+        }
       } catch (healthError) {
         this.logger.error(`❌ Keycloak health check FAILED: ${healthError.message}`);
+        this.logger.error(`❌ Bu genellikle şu anlama gelir:`);
+        this.logger.error(`   1. Keycloak servisi çalışmıyor`);
+        this.logger.error(`   2. KEYCLOAK_URL environment variable'ı yanlış`);
+        this.logger.error(`   3. Network connectivity sorunu var`);
+        this.logger.error(`❌ Mevcut KEYCLOAK_URL: ${keycloakUrl}`);
       }
 
       // MASTER REALM'DE AUTHENTICATE OL
-      await this.kcAdminClient.auth({
-        username,
-        password,
-        grantType: 'password',
-        clientId: 'admin-cli',
-        totp: undefined, // TOTP yoksa undefined
-      });
+      try {
+        await this.kcAdminClient.auth({
+          username,
+          password,
+          grantType: 'password',
+          clientId: 'admin-cli',
+          totp: undefined, // TOTP yoksa undefined
+        });
+      } catch (authError) {
+        this.logger.error(`❌ Admin-cli ile authentication başarısız. Manuel token endpoint'i deneniyor...`);
+
+        // Manuel token request
+        const tokenUrl = `${keycloakUrl}/realms/master/protocol/openid-connect/token`;
+        this.logger.log(`🔗 Token URL: ${tokenUrl}`);
+
+        try {
+          const tokenResponse = await fetch(tokenUrl, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: new URLSearchParams({
+              grant_type: 'password',
+              client_id: 'admin-cli',
+              username: username,
+              password: password,
+            }),
+          });
+
+          this.logger.log(`🔗 Manuel token response status: ${tokenResponse.status}`);
+
+          if (!tokenResponse.ok) {
+            const errorText = await tokenResponse.text();
+            this.logger.error(`❌ Manuel token request failed: ${errorText}`);
+          } else {
+            const tokenData = await tokenResponse.json();
+            this.logger.log(`✅ Manuel token request başarılı!`);
+
+            // Token'ı manual olarak set et
+            this.kcAdminClient.accessToken = tokenData.access_token;
+            this.kcAdminClient.refreshToken = tokenData.refresh_token;
+          }
+        } catch (manualTokenError) {
+          this.logger.error(`❌ Manuel token request error: ${manualTokenError.message}`);
+          throw authError; // Orijinal hatayı fırlat
+        }
+      }
 
       this.logger.log(`✅ Keycloak Admin Client başarıyla kimlik doğrulandı.`);
       this.initialized = true;
