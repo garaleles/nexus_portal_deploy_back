@@ -3,6 +3,10 @@
   "version": "1.0.0",
   "description": "Business Portal Backend Platform with NestJS, PostgreSQL, and Multi-Tenancy",
   "main": "index.js",
+  "engines": {
+    "node": ">=20.0.0",
+    "npm": ">=10.0.0"
+  },
   "scripts": {
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
@@ -28,7 +32,7 @@
   },
   "dependencies": {
     "@google-cloud/storage": "^7.10.0",
-    "@keycloak/keycloak-admin-client": "^18.0.0",
+    "@keycloak/keycloak-admin-client": "^26.2.5",
     "@nestjs-modules/mailer": "^1.11.2",
     "@nestjs/axios": "^3.0.2",
     "@nestjs/cache-manager": "^2.2.2",
