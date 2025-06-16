@@ -24,8 +24,8 @@ DB_DATABASE = "${{Postgres.PGDATABASE}}"
 # JWT Configuration
 JWT_SECRET = "your-super-secure-jwt-secret-min-32-chars-here!"
 
-# Keycloak Configuration
-KEYCLOAK_URL = "https://business-portal-keycloak-production.up.railway.app"
+# Keycloak Configuration - Railway Internal URL
+KEYCLOAK_URL = "http://business-portal-keycloak.railway.internal:8080"
 KEYCLOAK_REALM = "nexus-portal"
 KEYCLOAK_CLIENT_ID = "business-portal"
 KEYCLOAK_ADMIN_USERNAME = "admin"
