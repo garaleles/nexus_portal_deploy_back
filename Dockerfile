@@ -13,8 +13,8 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies with memory optimization
-RUN npm ci --legacy-peer-deps --maxsockets 1 && npm cache clean --force
+# Remove lock file to avoid sync issues and install dependencies
+RUN rm -f package-lock.json && npm install --legacy-peer-deps --maxsockets 1 && npm cache clean --force
 
 # Copy source code
 COPY . .
