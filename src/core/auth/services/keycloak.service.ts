@@ -112,153 +112,87 @@ export class KeycloakService {
       this.logger.log(`🔑 Password exists: ${!!password}`);
       this.logger.log(`🔑 Password length: ${password?.length || 0}`);
       this.logger.log(`🔑 Password DEBUG: "${password}"`);
-      this.logger.log(`🌐 Token URL: ${keycloakUrl}/realms/master/protocol/openid-connect/token`);
 
-      // ÖNCE URL'yi test et - AXIOS ile
-      this.logger.log(`🧪 Keycloak URL'sine ping atılıyor (AXIOS)...`);
+      // Token URL'yi oluştur
+      const tokenUrl = `${keycloakUrl}/realms/master/protocol/openid-connect/token`;
+      this.logger.log(`🌐 Token URL: ${tokenUrl}`);
 
-      const axiosConfig = {
-        timeout: 30000, // 30 saniye timeout
-        headers: {
-          'Accept': 'application/json',
-          'User-Agent': 'Business-Portal-Backend/1.0'
-        },
-        validateStatus: function (status: number) {
-          return status < 500; // 500'den küçük tüm status'leri kabul et
-        }
-      };
+      // 🔧 SSL AYARLARINI DÜZELT
+      await this.fixRealmSSLSettings(keycloakUrl, username, password);
 
-      try {
-        // Railway internal network'te farklı endpoint'ler dene
-        const endpoints = [
-          '/health/ready',
-          '/health',
-          '/admin/',
-          '/'
-        ];
-
-        let healthSuccess = false;
-
-        for (const endpoint of endpoints) {
-          try {
-            this.logger.log(`🔍 AXIOS ile test ediliyor: ${keycloakUrl}${endpoint}`);
-            const response: AxiosResponse = await axios.get(`${keycloakUrl}${endpoint}`, axiosConfig);
-            this.logger.log(`📊 ${endpoint} response: ${response.status}`);
-
-            if (response.status < 400) {
-              this.logger.log(`✅ Keycloak AXIOS bağlantısı başarılı: ${endpoint}`);
-              healthSuccess = true;
-              break;
-            }
-          } catch (endpointError: any) {
-            this.logger.warn(`⚠️ ${endpoint} AXIOS başarısız: ${endpointError.message}`);
-            if (endpointError.response) {
-              this.logger.warn(`   Status: ${endpointError.response.status}`);
-            }
-          }
-        }
-
-        if (!healthSuccess) {
-          throw new Error('Tüm AXIOS health check endpoint\'leri başarısız');
-        }
-
-      } catch (healthError: any) {
-        this.logger.error(`❌ Keycloak AXIOS health check FAILED: ${healthError.message}`);
-        this.logger.error(`❌ Railway networking sorunu olabilir:`);
-        this.logger.error(`   1. Internal network: http://business-portal-keycloak.railway.internal:8080`);
-        this.logger.error(`   2. Public network: https://business-portal-keycloak-production.up.railway.app`);
-        this.logger.error(`   3. Keycloak servisi henüz başlamadı (cold start)`);
-        this.logger.error(`❌ Mevcut KEYCLOAK_URL: ${keycloakUrl}`);
-
-        // Cold start için biraz bekle
-        this.logger.log(`⏳ Keycloak cold start için 10 saniye bekleniyor...`);
-        await new Promise(resolve => setTimeout(resolve, 10000));
-      }
-
-      // MASTER REALM'DE AUTHENTICATE OL
-      try {
-        this.logger.log(`🔐 Admin-cli auth deneniyor...`);
-        await this.kcAdminClient.auth({
-          username,
-          password,
-          grantType: 'password',
-          clientId: 'admin-cli',
-          totp: undefined, // TOTP yoksa undefined
-        });
-        this.logger.log(`✅ Admin-cli auth BAŞARILI!`);
-      } catch (authError: any) {
-        this.logger.error(`❌ Admin-cli auth HATASI: ${authError.message}`);
-        if (authError.response) {
-          this.logger.error(`❌ Auth Response Status: ${authError.response.status}`);
-          this.logger.error(`❌ Auth Response Data: ${JSON.stringify(authError.response.data)}`);
-        }
-        this.logger.error(`❌ Manuel token endpoint'i deneniyor...`);
-
-        // Manuel token request - INTERNAL domain kullan
-        const tokenUrl = `${keycloakUrl}/realms/master/protocol/openid-connect/token`;
-        this.logger.log(`🔗 Token URL (AXIOS - INTERNAL): ${tokenUrl}`);
-
-        try {
-          const tokenData = new URLSearchParams({
-            grant_type: 'password',
-            client_id: 'admin-cli',
-            username: username,
-            password: password,
-          });
-
-          const tokenResponse: AxiosResponse = await axios.post(tokenUrl, tokenData, {
-            headers: {
-              'Content-Type': 'application/x-www-form-urlencoded',
-            },
-            timeout: 30000,
-            validateStatus: function (status: number) {
-              return status < 500; // 500'den küçük tüm status'leri kabul et
-            }
-          });
-
-          this.logger.log(`🔗 Manuel AXIOS token response status: ${tokenResponse.status}`);
-
-          if (tokenResponse.status >= 400) {
-            this.logger.error(`❌ Manuel AXIOS token request failed: ${JSON.stringify(tokenResponse.data)}`);
-          } else {
-            const tokenResponseData = tokenResponse.data;
-            this.logger.log(`✅ Manuel AXIOS token request başarılı!`);
-
-            // Token'ı manual olarak set et
-            this.kcAdminClient.accessToken = tokenResponseData.access_token;
-            this.kcAdminClient.refreshToken = tokenResponseData.refresh_token;
-          }
-        } catch (manualTokenError: any) {
-          this.logger.error(`❌ Manuel AXIOS token request error: ${manualTokenError.message}`);
-          if (manualTokenError.response) {
-            this.logger.error(`❌ AXIOS response status: ${manualTokenError.response.status}`);
-            this.logger.error(`❌ AXIOS response data: ${JSON.stringify(manualTokenError.response.data)}`);
-          }
-          throw authError; // Orijinal hatayı fırlat
-        }
-      }
+      // Admin client authentication
+      await this.kcAdminClient.auth({
+        username,
+        password,
+        grantType: 'password',
+        clientId: 'admin-cli',
+      });
 
       this.logger.log(`✅ Keycloak Admin Client başarıyla kimlik doğrulandı.`);
       this.initialized = true;
     } catch (error) {
-      this.logger.error(`❌ Keycloak Admin Client kimlik doğrulaması başarısız:`, error.message);
+      this.logger.error(`❌ Keycloak Admin Client kimlik doğrulaması başarısız:`);
+      this.logger.error(error.message);
+      throw error;
+    }
+  }
 
-      // Detaylı hata bilgisi
-      if (error.response) {
-        this.logger.error(`📡 HTTP Status: ${error.response.status}`);
-        this.logger.error(`📡 Response Data:`, JSON.stringify(error.response.data, null, 2));
-        this.logger.error(`📡 Response Headers:`, JSON.stringify(error.response.headers, null, 2));
+  /**
+   * 🔧 Keycloak realm SSL ayarlarını düzelt
+   * Railway internal network'te HTTP kullanıyoruz ama realm SSL required olabilir
+   */
+  private async fixRealmSSLSettings(keycloakUrl: string, username: string, password: string) {
+    try {
+      this.logger.log(`🔧 Keycloak realm SSL ayarları kontrol ediliyor...`);
+
+      // 1. Admin token al
+      const tokenUrl = `${keycloakUrl}/realms/master/protocol/openid-connect/token`;
+      const tokenResponse = await axios.post(tokenUrl, new URLSearchParams({
+        username,
+        password,
+        grant_type: 'password',
+        client_id: 'admin-cli'
+      }), {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded'
+        }
+      });
+
+      const adminToken = tokenResponse.data.access_token;
+      this.logger.log(`✅ Admin token alındı`);
+
+      // 2. Master realm SSL ayarlarını düzelt
+      const masterRealmUrl = `${keycloakUrl}/admin/realms/master`;
+      await axios.put(masterRealmUrl, {
+        sslRequired: 'NONE'
+      }, {
+        headers: {
+          'Authorization': `Bearer ${adminToken}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      this.logger.log(`✅ Master realm SSL ayarları düzeltildi (sslRequired: NONE)`);
+
+      // 3. Business-portal realm varsa onu da düzelt
+      try {
+        const businessRealmUrl = `${keycloakUrl}/admin/realms/business-portal`;
+        await axios.put(businessRealmUrl, {
+          sslRequired: 'NONE'
+        }, {
+          headers: {
+            'Authorization': `Bearer ${adminToken}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        this.logger.log(`✅ Business-portal realm SSL ayarları düzeltildi`);
+      } catch (realmError) {
+        this.logger.warn(`⚠️ Business-portal realm bulunamadı veya düzeltilemedi: ${realmError.message}`);
       }
 
-      // Axios request detayları
-      if (error.config) {
-        this.logger.error(`📡 Request URL: ${error.config.url}`);
-        this.logger.error(`📡 Request Method: ${error.config.method}`);
-        this.logger.error(`📡 Request Data:`, error.config.data);
-      }
-
-      this.initialized = false;
-      throw new InternalServerErrorException(`Keycloak Admin Client kimlik doğrulaması yapılamadı: ${error.message}`);
+    } catch (error) {
+      this.logger.warn(`⚠️ SSL ayarları düzeltilemedi: ${error.message}`);
+      // SSL fix başarısız olsa bile devam et
     }
   }
 
