@@ -38,8 +38,8 @@ export class TenantMiddleware implements NestMiddleware {
       }
 
       // Backend URL'si kendisine istek atıyorsa bypass et
-      const host = req.headers.host;
-      if (host && (host.includes('business-portal-backend') || host.includes('backend'))) {
+      const hostHeader = req.headers.host;
+      if (hostHeader && (hostHeader.includes('business-portal-backend') || hostHeader.includes('backend'))) {
         this.logger.log('🔧 BACKEND_SELF_REQUEST - Tenant kontrolü bypass ediliyor');
         return next();
       }
@@ -71,11 +71,10 @@ export class TenantMiddleware implements NestMiddleware {
       const tenantMetadataIdFromHeader = req.headers['x-tenant-id'] as string;
 
       // 3. Subdomain'den tenant'ı kontrol et (backward compatibility)
-      const host = req.headers.host;
       let tenantSlugFromSubdomain: string | null = null;
 
-      if (host) {
-        const hostParts = host.split('.');
+      if (hostHeader) {
+        const hostParts = hostHeader.split('.');
         if (hostParts.length > 2) {
           tenantSlugFromSubdomain = hostParts[0];
         }
