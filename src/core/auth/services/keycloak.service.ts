@@ -49,6 +49,9 @@ export class KeycloakService {
       // ÖNCE DIRECT HTTP CALL İLE TEST ET
       this.logger.log(`🧪 Direct HTTP call ile test ediliyor...`);
 
+      // Node.js SSL sertifika doğrulamasını geçici olarak devre dışı bırak
+      process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+
       const response = await fetch(testUrl, {
         method: 'POST',
         headers: {
