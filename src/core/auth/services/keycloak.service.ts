@@ -117,6 +117,7 @@ export class KeycloakService {
 
       // MASTER REALM'DE AUTHENTICATE OL
       try {
+        this.logger.log(`🔐 Admin-cli auth deneniyor...`);
         await this.kcAdminClient.auth({
           username,
           password,
@@ -124,13 +125,18 @@ export class KeycloakService {
           clientId: 'admin-cli',
           totp: undefined, // TOTP yoksa undefined
         });
-      } catch (authError) {
-        this.logger.error(`❌ Admin-cli ile authentication başarısız. Manuel token endpoint'i deneniyor...`);
+        this.logger.log(`✅ Admin-cli auth BAŞARILI!`);
+      } catch (authError: any) {
+        this.logger.error(`❌ Admin-cli auth HATASI: ${authError.message}`);
+        if (authError.response) {
+          this.logger.error(`❌ Auth Response Status: ${authError.response.status}`);
+          this.logger.error(`❌ Auth Response Data: ${JSON.stringify(authError.response.data)}`);
+        }
+        this.logger.error(`❌ Manuel token endpoint'i deneniyor...`);
 
-        // Manuel token request - HTTPS gerekiyorsa public domain kullan
-        const publicKeycloakUrl = 'https://business-portal-keycloak-production.up.railway.app';
-        const tokenUrl = `${publicKeycloakUrl}/realms/master/protocol/openid-connect/token`;
-        this.logger.log(`🔗 Token URL (AXIOS - PUBLIC): ${tokenUrl}`);
+        // Manuel token request - INTERNAL domain kullan
+        const tokenUrl = `${keycloakUrl}/realms/master/protocol/openid-connect/token`;
+        this.logger.log(`🔗 Token URL (AXIOS - INTERNAL): ${tokenUrl}`);
 
         try {
           const tokenData = new URLSearchParams({
@@ -692,10 +698,9 @@ export class KeycloakService {
     }
   }
 
-  // Keycloak'tan token almak için bir metod (AXIOS ile - PUBLIC domain)
+  // Keycloak'tan token almak için bir metod (AXIOS ile - INTERNAL domain)
   async getToken(username: string, password: string): Promise<any> {
-    const publicKeycloakUrl = 'https://business-portal-keycloak-production.up.railway.app';
-    const url = `${publicKeycloakUrl}/realms/${this.getRealm()}/protocol/openid-connect/token`;
+    const url = `${this.configService.get<string>('KEYCLOAK_URL')}/realms/${this.getRealm()}/protocol/openid-connect/token`;
     const clientId = this.configService.get<string>('KEYCLOAK_CLIENT_ID');
     const clientSecret = this.configService.get<string>('KEYCLOAK_CLIENT_SECRET');
 
