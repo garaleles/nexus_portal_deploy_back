@@ -52,7 +52,7 @@
       "description": "Main client for Business Portal application",
       "enabled": true,
       "clientAuthenticatorType": "client-secret",
-      "secret": "jqoXGSxdIoFpouOf8uHtKsyjyzO3M4jf",
+      "secret": "lmv5iNnI0H1RyG4oyVCcCYJeqv3vahct",
       "redirectUris": [
         "https://business-portal-frontend-production.up.railway.app/*",
         "http://localhost:4200/*"
