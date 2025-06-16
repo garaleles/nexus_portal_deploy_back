@@ -16,6 +16,7 @@
     "KC_HOSTNAME_STRICT": "false",
     "KC_HOSTNAME_STRICT_HTTPS": "false", 
     "KC_HTTP_ENABLED": "true",
+    "KC_HOSTNAME_STRICT_BACKCHANNEL": "false",
     "KC_DB": "postgres",
     "KC_DB_URL": "jdbc:postgresql://${{Postgres.PGHOST}}:${{Postgres.PGPORT}}/${{Postgres.PGDATABASE}}",
     "KC_DB_USERNAME": "${{Postgres.PGUSER}}",
