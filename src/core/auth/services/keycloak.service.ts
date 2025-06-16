@@ -10,78 +10,91 @@ export class KeycloakService {
   private readonly logger = new Logger(KeycloakService.name);
   private kcAdminClient: KcAdminClient;
   private initialized: boolean = false;
+  private isRailwayEnvironment: boolean = false;
 
   constructor(private configService: ConfigService) {
-    // Primary URL ile başla
-    let primaryUrl = this.configService.get<string>('KEYCLOAK_URL');
+    // Railway environment kontrolü
+    this.isRailwayEnvironment = !!process.env.RAILWAY_ENVIRONMENT || !!process.env.PORT;
 
-    // 🔧 URL FIX: Railway environment variable parsing sorunu
-    if (primaryUrl && primaryUrl.includes('KEYCLOAK_URL=')) {
-      primaryUrl = primaryUrl.replace('KEYCLOAK_URL=', '');
-      console.log(`⚠️ KEYCLOAK_URL constructor'da prefix sorunu tespit edildi, düzeltildi: ${primaryUrl}`);
-    }
+    this.logger.log(`🚀 KeycloakService başlatılıyor...`);
+    this.logger.log(`🌍 Railway Environment: ${this.isRailwayEnvironment}`);
 
-    this.kcAdminClient = new KcAdminClient({
-      baseUrl: primaryUrl,
-      realmName: 'master', // Admin işlemleri için master realm
-    });
-
-    // Retry mechanism ile authentication
-    this.authenticateWithRetry();
+    // Railway için optimize edilmiş başlatma
+    this.initializeForRailway();
   }
 
-  private async authenticateWithRetry(maxRetries: number = 3, delay: number = 5000) {
-    let primaryUrl = this.configService.get<string>('KEYCLOAK_URL');
-    let fallbackUrl = this.configService.get<string>('KEYCLOAK_PUBLIC_URL');
+  private async initializeForRailway() {
+    try {
+      // Primary URL al ve temizle
+      let keycloakUrl = this.configService.get<string>('KEYCLOAK_URL');
 
-    // 🔧 URL FIX: Railway environment variable parsing sorunu
-    if (primaryUrl && primaryUrl.includes('KEYCLOAK_URL=')) {
-      primaryUrl = primaryUrl.replace('KEYCLOAK_URL=', '');
-      this.logger.warn(`⚠️ KEYCLOAK_URL retry'da prefix sorunu tespit edildi, düzeltildi: ${primaryUrl}`);
-    }
-
-    if (fallbackUrl && fallbackUrl.includes('KEYCLOAK_PUBLIC_URL=')) {
-      fallbackUrl = fallbackUrl.replace('KEYCLOAK_PUBLIC_URL=', '');
-      this.logger.warn(`⚠️ KEYCLOAK_PUBLIC_URL retry'da prefix sorunu tespit edildi, düzeltildi: ${fallbackUrl}`);
-    }
-
-    // Önce primary URL ile dene
-    for (let i = 0; i < maxRetries; i++) {
-      try {
-        this.logger.log(`🔄 Keycloak authentication denemesi ${i + 1}/${maxRetries} - Primary URL: ${primaryUrl} [v1.0.1]`);
-        await this.authenticateAdminClient();
-        this.logger.log(`✅ Keycloak authentication başarılı (${i + 1}/${maxRetries}) - Primary URL`);
-        return; // Başarılı oldu, döngüden çık
-      } catch (error) {
-        this.logger.warn(`❌ Primary URL authentication denemesi ${i + 1}/${maxRetries} başarısız: ${error.message}`);
-
-        if (i < maxRetries - 1) {
-          this.logger.log(`⏳ ${delay}ms bekleyip tekrar denenecek...`);
-          await new Promise(resolve => setTimeout(resolve, delay));
-        }
+      // Environment variable parsing fix
+      if (keycloakUrl && keycloakUrl.includes('KEYCLOAK_URL=')) {
+        keycloakUrl = keycloakUrl.replace('KEYCLOAK_URL=', '');
+        this.logger.warn(`⚠️ Environment variable prefix sorunu düzeltildi: ${keycloakUrl}`);
       }
-    }
 
-    // Primary URL başarısız olursa fallback URL'i dene
-    if (fallbackUrl && fallbackUrl !== primaryUrl) {
-      this.logger.log(`🔄 Fallback URL ile deneniyor: ${fallbackUrl}`);
+      this.logger.log(`📍 Keycloak URL: ${keycloakUrl}`);
 
-      // Fallback URL ile yeni client instance
+      // Admin client'i konfigüre et
       this.kcAdminClient = new KcAdminClient({
-        baseUrl: fallbackUrl,
-        realmName: 'master',
+        baseUrl: keycloakUrl,
+        realmName: 'master'
       });
 
-      for (let i = 0; i < maxRetries; i++) {
-        try {
-          this.logger.log(`🔄 Fallback URL authentication denemesi ${i + 1}/${maxRetries}`);
-          await this.authenticateAdminClient();
-          this.logger.log(`✅ Keycloak authentication başarılı - Fallback URL kullanılıyor`);
-          return;
-        } catch (error) {
-          this.logger.warn(`❌ Fallback URL authentication denemesi ${i + 1}/${maxRetries} başarısız: ${error.message}`);
+      // Railway için retry mechanism
+      await this.authenticateWithRailwayOptimization();
 
-          if (i < maxRetries - 1) {
+    } catch (error) {
+      this.logger.error(`❌ KeycloakService başlatma hatası: ${error.message}`);
+      this.initialized = false;
+    }
+  }
+
+  private async authenticateWithRailwayOptimization(maxRetries: number = 3) {
+    const username = this.configService.get<string>('KEYCLOAK_ADMIN_USERNAME');
+    const password = this.configService.get<string>('KEYCLOAK_ADMIN_PASSWORD');
+
+    this.logger.log(`🔐 Keycloak Admin Authentication başlatılıyor...`);
+    this.logger.log(`👤 Username: ${username}`);
+    this.logger.log(`🔑 Password exists: ${!!password}`);
+
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        this.logger.log(`🔄 Authentication denemesi ${attempt}/${maxRetries}`);
+
+        // Railway'de basit authentication stratejisi
+        await this.kcAdminClient.auth({
+          username,
+          password,
+          grantType: 'password',
+          clientId: 'admin-cli',
+        });
+
+        this.logger.log(`✅ Keycloak authentication başarılı (${attempt}/${maxRetries})`);
+        this.initialized = true;
+
+        // Authentication başarılı olduktan sonra SSL ayarlarını düzelt
+        await this.optimizeRailwaySSLSettings();
+
+        return;
+
+      } catch (error) {
+        this.logger.warn(`❌ Authentication denemesi ${attempt}/${maxRetries} başarısız: ${error.message}`);
+
+        if (error.message.includes('ENOTFOUND') || error.message.includes('EAI_AGAIN')) {
+          this.logger.warn(`🌐 DNS çözümleme sorunu tespit edildi`);
+
+          // DNS sorunu varsa biraz daha uzun bekle
+          if (attempt < maxRetries) {
+            const delay = attempt * 10000; // 10, 20, 30 saniye
+            this.logger.log(`⏳ DNS sorunu için ${delay}ms bekleniyor...`);
+            await new Promise(resolve => setTimeout(resolve, delay));
+          }
+        } else {
+          // Diğer hatalar için kısa bekle
+          if (attempt < maxRetries) {
+            const delay = 5000;
             this.logger.log(`⏳ ${delay}ms bekleyip tekrar denenecek...`);
             await new Promise(resolve => setTimeout(resolve, delay));
           }
@@ -90,145 +103,115 @@ export class KeycloakService {
     }
 
     this.logger.error(`❌ Tüm Keycloak authentication denemeleri başarısız oldu`);
-    // Uygulama çalışmaya devam etsin, sadece Keycloak authentication çalışmasın
     this.initialized = false;
   }
 
-  async authenticateAdminClient() {
+  /**
+   * Railway için optimize edilmiş SSL ayarları
+   */
+  private async optimizeRailwaySSLSettings() {
     try {
-      const username = this.configService.get<string>('KEYCLOAK_ADMIN_USERNAME');
-      const password = this.configService.get<string>('KEYCLOAK_ADMIN_PASSWORD');
-      let keycloakUrl = this.configService.get<string>('KEYCLOAK_URL');
+      this.logger.log(`🔧 Railway için SSL ayarları optimize ediliyor...`);
 
-      // 🔧 URL FIX: Railway environment variable parsing sorunu
-      if (keycloakUrl && keycloakUrl.includes('KEYCLOAK_URL=')) {
-        keycloakUrl = keycloakUrl.replace('KEYCLOAK_URL=', '');
-        this.logger.warn(`⚠️ KEYCLOAK_URL environment variable'ında prefix sorunu tespit edildi, düzeltildi: ${keycloakUrl}`);
+      // Public URL'yi al
+      const publicUrl = this.configService.get<string>('KEYCLOAK_PUBLIC_URL');
+      if (!publicUrl) {
+        this.logger.warn(`⚠️ KEYCLOAK_PUBLIC_URL bulunamadı, SSL optimizasyonu atlanıyor`);
+        return;
       }
 
-      this.logger.log(`🔐 Keycloak Admin Auth başlatılıyor...`);
-      this.logger.log(`📍 URL: ${keycloakUrl}`);
-      this.logger.log(`👤 Username: ${username}`);
-      this.logger.log(`🔑 Password exists: ${!!password}`);
-      this.logger.log(`🔑 Password length: ${password?.length || 0}`);
-      this.logger.log(`🔑 Password DEBUG: "${password}"`);
+      this.logger.log(`🌐 Public URL: ${publicUrl}`);
 
-      // Token URL'yi oluştur
-      const tokenUrl = `${keycloakUrl}/realms/master/protocol/openid-connect/token`;
-      this.logger.log(`🌐 Token URL: ${tokenUrl}`);
+      // Admin token al
+      const username = this.configService.get<string>('KEYCLOAK_ADMIN_USERNAME');
+      const password = this.configService.get<string>('KEYCLOAK_ADMIN_PASSWORD');
 
-      // 🔧 SSL AYARLARINI DÜZELT
-      await this.fixRealmSSLSettings(keycloakUrl, username, password);
-
-      // Admin client authentication
-      await this.kcAdminClient.auth({
-        username,
-        password,
-        grantType: 'password',
-        clientId: 'admin-cli',
-      });
-
-      this.logger.log(`✅ Keycloak Admin Client başarıyla kimlik doğrulandı.`);
-      this.initialized = true;
-    } catch (error) {
-      this.logger.error(`❌ Keycloak Admin Client kimlik doğrulaması başarısız:`);
-      this.logger.error(error.message);
-      throw error;
-    }
-  }
-
-  /**
-   * 🔧 Keycloak realm SSL ayarlarını düzelt
-   * Railway internal network'te HTTP kullanıyoruz ama realm SSL required olabilir
-   */
-  private async fixRealmSSLSettings(keycloakUrl: string, username: string, password: string) {
-    try {
-      this.logger.log(`🔧 Keycloak realm SSL ayarları kontrol ediliyor...`);
-
-      // Public URL'yi dene (HTTPS)
-      const publicUrl = this.configService.get<string>('KEYCLOAK_PUBLIC_URL') || 'https://keycloack-production.up.railway.app';
-      this.logger.log(`🌐 Public URL ile SSL ayarları düzeltiliyor: ${publicUrl}`);
-
-      // 1. Admin token al - PUBLIC URL ile
-      const tokenUrl = `${publicUrl}/realms/master/protocol/openid-connect/token`;
-      const tokenResponse = await axios.post(tokenUrl, new URLSearchParams({
-        username,
-        password,
-        grant_type: 'password',
-        client_id: 'admin-cli'
-      }), {
+      const tokenResponse = await axios.post(`${publicUrl}/realms/master/protocol/openid-connect/token`,
+        new URLSearchParams({
+          username,
+          password,
+          grant_type: 'password',
+          client_id: 'admin-cli'
+        }), {
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded'
         },
-        timeout: 30000
+        timeout: 30000,
+        // Railway için SSL ayarları
+        httpsAgent: false,
+        validateStatus: (status) => status < 500 // 4xx hataları da kabul et
       });
 
-      const adminToken = tokenResponse.data.access_token;
-      this.logger.log(`✅ Admin token alındı (public URL)`);
+      if (tokenResponse.status === 200 && tokenResponse.data?.access_token) {
+        const adminToken = tokenResponse.data.access_token;
+        this.logger.log(`✅ Admin token alındı`);
 
-      // 2. Master realm SSL ayarlarını düzelt
-      const masterRealmUrl = `${publicUrl}/admin/realms/master`;
-      await axios.put(masterRealmUrl, {
-        sslRequired: 'NONE'
+        // Master realm SSL ayarlarını düzelt
+        await this.updateRealmSSLSettings(publicUrl, adminToken, 'master');
+
+        // Business realm de varsa düzelt
+        const businessRealm = this.configService.get<string>('KEYCLOAK_REALM');
+        if (businessRealm && businessRealm !== 'master') {
+          await this.updateRealmSSLSettings(publicUrl, adminToken, businessRealm);
+        }
+
+        this.logger.log(`✅ Railway SSL optimizasyonu tamamlandı`);
+      }
+
+    } catch (error) {
+      this.logger.warn(`⚠️ SSL optimizasyonu başarısız (önemli değil): ${error.message}`);
+      // SSL optimizasyonu başarısız olsa bile devam et
+    }
+  }
+
+  private async updateRealmSSLSettings(publicUrl: string, adminToken: string, realmName: string) {
+    try {
+      const realmUrl = `${publicUrl}/admin/realms/${realmName}`;
+
+      await axios.put(realmUrl, {
+        sslRequired: 'none', // Railway için SSL'i devre dışı bırak
+        registrationAllowed: true,
+        registrationEmailAsUsername: true,
+        rememberMe: true,
+        verifyEmail: true,
+        loginWithEmailAllowed: true,
+        duplicateEmailsAllowed: false
       }, {
         headers: {
           'Authorization': `Bearer ${adminToken}`,
           'Content-Type': 'application/json'
         },
-        timeout: 30000
+        timeout: 30000,
+        validateStatus: (status) => status < 500
       });
 
-      this.logger.log(`✅ Master realm SSL ayarları düzeltildi (sslRequired: NONE)`);
-
-      // 3. Business-portal realm varsa onu da düzelt
-      try {
-        const businessRealmUrl = `${publicUrl}/admin/realms/business-portal`;
-        await axios.put(businessRealmUrl, {
-          sslRequired: 'NONE'
-        }, {
-          headers: {
-            'Authorization': `Bearer ${adminToken}`,
-            'Content-Type': 'application/json'
-          },
-          timeout: 30000
-        });
-        this.logger.log(`✅ Business-portal realm SSL ayarları düzeltildi`);
-      } catch (realmError) {
-        this.logger.warn(`⚠️ Business-portal realm bulunamadı veya düzeltilemedi: ${realmError.message}`);
-      }
-
-      // 4. Biraz bekle ki ayarlar etkili olsun
-      this.logger.log(`⏳ SSL ayarlarının etkili olması için 3 saniye bekleniyor...`);
-      await new Promise(resolve => setTimeout(resolve, 3000));
+      this.logger.log(`✅ ${realmName} realm SSL ayarları güncellendi`);
 
     } catch (error) {
-      this.logger.warn(`⚠️ SSL ayarları düzeltilemedi: ${error.message}`);
-      if (error.response) {
-        this.logger.warn(`   Status: ${error.response.status}`);
-        this.logger.warn(`   Data: ${JSON.stringify(error.response.data)}`);
-      }
-      // SSL fix başarısız olsa bile devam et
+      this.logger.warn(`⚠️ ${realmName} realm güncellenemedi: ${error.message}`);
     }
   }
 
   async ensureAuthenticated() {
-    try {
-      // Token varsa ve geçerliyse devam et
-      if (this.kcAdminClient.accessToken) {
-        // Token'ı test et
-        await this.kcAdminClient.users.find({
-          realm: this.getRealm(),
-          max: 1
-        });
-        return; // Token geçerli
-      }
-    } catch (error) {
-      // Token geçersiz, yeniden authenticate et
-      this.logger.warn('Keycloak token geçersiz, yeniden authenticate ediliyor...');
+    if (!this.initialized) {
+      this.logger.warn(`⚠️ Keycloak henüz initialize edilmedi, retry yapılıyor...`);
+      await this.authenticateWithRailwayOptimization();
     }
 
-    // Token yok veya geçersiz, yeniden authenticate et
-    await this.authenticateAdminClient();
+    if (!this.initialized) {
+      throw new Error('Keycloak servisi kullanılamıyor');
+    }
+
+    // Token'ı test et
+    try {
+      await this.kcAdminClient.users.find({
+        realm: this.getRealm(),
+        max: 1
+      });
+    } catch (error) {
+      this.logger.warn('Keycloak token geçersiz, yeniden authenticate ediliyor...');
+      await this.authenticateWithRailwayOptimization();
+    }
   }
 
   isInitialized(): boolean {
@@ -236,8 +219,7 @@ export class KeycloakService {
   }
 
   private getRealm(): string {
-    const realm = this.configService.get<string>('KEYCLOAK_REALM');
-    this.logger.debug(`Kullanılan Keycloak Realm: ${realm}`);
+    const realm = this.configService.get<string>('KEYCLOAK_REALM') || 'business-portal';
     return realm;
   }
 
