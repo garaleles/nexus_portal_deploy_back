@@ -23,7 +23,9 @@ echo "🔐 Keycloak başlatılıyor..."
   --hostname-strict=false \
   --hostname-strict-https=false \
   --https-required=none \
+  --ssl-required=none \
+  --hostname-verification=false \
   --spi-truststore-file-disabled=true \
   --spi-connections-http-client-default-disable-trust-manager=true \
-  --spi-hostname-default-frontend-url="https://business-portal-keycloak-production.up.railway.app" \
-  --spi-hostname-default-admin-url="https://business-portal-keycloak-production.up.railway.app" 
+  --spi-hostname-default-frontend-url="http://business-portal-keycloak.railway.internal:8080" \
+  --spi-hostname-default-admin-url="http://business-portal-keycloak.railway.internal:8080" 
