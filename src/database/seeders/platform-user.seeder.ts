@@ -70,12 +70,7 @@ export class PlatformUserSeeder implements OnApplicationBootstrap {
             if (result.user && result.user.id) {
                 // Sadece yeni kullanıcılar için verification email gönder
                 if (result.isNewUser) {
-                    try {
-                        await this.keycloakService.sendVerificationEmail(result.user.id);
-                        this.logger.log(`Verification email gönderildi (yeni kullanıcı): ${params.email}`);
-                    } catch (emailError) {
-                        this.logger.warn(`Verification email gönderilemedi: ${emailError.message}`);
-                    }
+                    this.logger.log(`Verification email gönderilecek (yeni kullanıcı): ${params.email}`);
                 } else {
                     this.logger.log(`Mevcut kullanıcı güncellemesi (email gönderilmedi): ${params.email}`);
                 }
