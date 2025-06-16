@@ -31,7 +31,7 @@ export class KeycloakService {
     // Önce primary URL ile dene
     for (let i = 0; i < maxRetries; i++) {
       try {
-        this.logger.log(`🔄 Keycloak authentication denemesi ${i + 1}/${maxRetries} - Primary URL: ${primaryUrl}`);
+        this.logger.log(`🔄 Keycloak authentication denemesi ${i + 1}/${maxRetries} - Primary URL: ${primaryUrl} [v1.0.1]`);
         await this.authenticateAdminClient();
         this.logger.log(`✅ Keycloak authentication başarılı (${i + 1}/${maxRetries}) - Primary URL`);
         return; // Başarılı oldu, döngüden çık

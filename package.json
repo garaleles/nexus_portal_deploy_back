@@ -1,6 +1,6 @@
 {
   "name": "business-portal-back",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Business Portal Backend Platform with NestJS, PostgreSQL, and Multi-Tenancy",
   "main": "index.js",
   "engines": {
