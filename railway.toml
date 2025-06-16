@@ -1,0 +1,43 @@
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile"
+
+[deploy]
+numReplicas = 1
+sleepApplication = false
+restartPolicyType = "ON_FAILURE"
+healthcheckPath = "/api/health"
+healthcheckTimeout = 300
+
+[environments.production.variables]
+NODE_ENV = "production"
+PORT = "${{PORT}}"
+
+# Database Configuration
+DATABASE_URL = "${{Postgres.DATABASE_URL}}"
+DB_HOST = "${{Postgres.PGHOST}}"
+DB_PORT = "${{Postgres.PGPORT}}"
+DB_USERNAME = "${{Postgres.PGUSER}}"
+DB_PASSWORD = "${{Postgres.PGPASSWORD}}"
+DB_DATABASE = "${{Postgres.PGDATABASE}}"
+
+# JWT Configuration
+JWT_SECRET = "your-super-secure-jwt-secret-min-32-chars-here!"
+
+# Keycloak Configuration
+KEYCLOAK_URL = "https://business-portal-keycloak-production.up.railway.app"
+KEYCLOAK_REALM = "nexus-portal"
+KEYCLOAK_CLIENT_ID = "business-portal"
+KEYCLOAK_ADMIN_USERNAME = "admin"
+KEYCLOAK_ADMIN_PASSWORD = "SuperSecure123!"
+
+# Application Settings
+FRONTEND_URL = "https://your-frontend-service.up.railway.app"
+SUPER_ADMIN_EMAIL = "admin@nexus-portal.com"
+SUPER_ADMIN_PASSWORD = "SuperAdmin123!"
+SUPER_ADMIN_FIRST_NAME = "Super"
+SUPER_ADMIN_LAST_NAME = "Admin"
+
+# Encryption
+ENCRYPTION_KEY = "your-32-character-encryption-key-here!"
+ENCRYPTION_IV = "your-16-char-iv-here" 

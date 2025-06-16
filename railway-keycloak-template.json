@@ -11,7 +11,7 @@
   },
   "environment": {
     "KEYCLOAK_ADMIN": "admin",
-    "KEYCLOAK_ADMIN_PASSWORD": "SuperSecure123!",
+    "KEYCLOAK_ADMIN_PASSWORD": "${{KEYCLOAK_ADMIN_PASSWORD}}",
     "KC_PROXY": "edge",
     "KC_HOSTNAME_STRICT": "false",
     "KC_HOSTNAME_STRICT_HTTPS": "false", 
@@ -22,8 +22,10 @@
     "KC_DB_PASSWORD": "${{Postgres.PGPASSWORD}}",
     "KC_HEALTH_ENABLED": "true",
     "KC_METRICS_ENABLED": "true",
+    "KC_LOG_LEVEL": "INFO",
+    "KC_FEATURES": "preview,scripts,organization",
     "PORT": "8080",
-    "JAVA_OPTS": "-Xms512m -Xmx1024m"
+    "JAVA_OPTS": "-Xms256m -Xmx768m -XX:MetaspaceSize=96M -XX:MaxMetaspaceSize=256m"
   },
   "healthcheckPath": "/health/ready",
   "healthcheckTimeout": 300,
