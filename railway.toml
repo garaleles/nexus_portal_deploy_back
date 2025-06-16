@@ -11,29 +11,26 @@ healthcheckTimeout = 600
 
 [environments.production.variables]
 NODE_ENV = "production"
-PORT = "${{PORT}}"
+PORT = "3000"
+DATABASE_URL = "${{Postgres.DATABASE_URL}}"
+KEYCLOAK_URL = "http://keycloack.railway.internal:8080"
+KEYCLOAK_PUBLIC_URL = "https://keycloack-production.up.railway.app"
+KEYCLOAK_ADMIN_USERNAME = "admin"
+KEYCLOAK_ADMIN_PASSWORD = "SuperSecure123!"
+KEYCLOAK_CLIENT_ID = "business-portal"
+KEYCLOAK_CLIENT_SECRET = "lmv5iNnI0H1RyG4oyVCcCYJeqv3vahct"
+KEYCLOAK_REALM = "business-portal"
+JWT_SECRET = "your-super-secret-jwt-key-here-change-in-production"
+JWT_EXPIRES_IN = "24h"
+CORS_ORIGIN = "*"
+CORS_CREDENTIALS = "true"
 
 # Database Configuration - PostgreSQL Plugin Variables
-DATABASE_URL = "${{Postgres.DATABASE_URL}}"
 DB_HOST = "${{Postgres.PGHOST}}"
 DB_PORT = "${{Postgres.PGPORT}}"
 DB_USERNAME = "${{Postgres.PGUSER}}"
 DB_PASSWORD = "${{Postgres.PGPASSWORD}}"
 DB_DATABASE = "${{Postgres.PGDATABASE}}"
-
-# JWT Configuration
-JWT_SECRET = "your-super-secure-jwt-secret-min-32-chars-here!"
-
-# Railway Internal Network - ORJINAL ÇALIŞAN YAPILANDIRMA
-KEYCLOAK_URL = "http://keycloack.railway.internal:8080"
-KEYCLOAK_REALM = "nexus-portal"  
-KEYCLOAK_CLIENT_ID = "business-portal"
-KEYCLOAK_CLIENT_SECRET = "lmv5iNnI0H1RyG4oyVCcCYJeqv3vahct"
-KEYCLOAK_ADMIN_USERNAME = "admin"
-KEYCLOAK_ADMIN_PASSWORD = "SuperSecure123!"
-
-# Internal network HTTPS sertifika sorunu - public kullan
-# KEYCLOAK_URL = "https://business-portal-keycloak.railway.internal"
 
 # Application Settings
 FRONTEND_URL = "https://your-frontend-service.up.railway.app"

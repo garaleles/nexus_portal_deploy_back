@@ -145,8 +145,12 @@ export class KeycloakService {
     try {
       this.logger.log(`🔧 Keycloak realm SSL ayarları kontrol ediliyor...`);
 
-      // 1. Admin token al
-      const tokenUrl = `${keycloakUrl}/realms/master/protocol/openid-connect/token`;
+      // Public URL'yi dene (HTTPS)
+      const publicUrl = this.configService.get<string>('KEYCLOAK_PUBLIC_URL') || 'https://keycloack-production.up.railway.app';
+      this.logger.log(`🌐 Public URL ile SSL ayarları düzeltiliyor: ${publicUrl}`);
+
+      // 1. Admin token al - PUBLIC URL ile
+      const tokenUrl = `${publicUrl}/realms/master/protocol/openid-connect/token`;
       const tokenResponse = await axios.post(tokenUrl, new URLSearchParams({
         username,
         password,
@@ -155,43 +159,54 @@ export class KeycloakService {
       }), {
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded'
-        }
+        },
+        timeout: 30000
       });
 
       const adminToken = tokenResponse.data.access_token;
-      this.logger.log(`✅ Admin token alındı`);
+      this.logger.log(`✅ Admin token alındı (public URL)`);
 
       // 2. Master realm SSL ayarlarını düzelt
-      const masterRealmUrl = `${keycloakUrl}/admin/realms/master`;
+      const masterRealmUrl = `${publicUrl}/admin/realms/master`;
       await axios.put(masterRealmUrl, {
         sslRequired: 'NONE'
       }, {
         headers: {
           'Authorization': `Bearer ${adminToken}`,
           'Content-Type': 'application/json'
-        }
+        },
+        timeout: 30000
       });
 
       this.logger.log(`✅ Master realm SSL ayarları düzeltildi (sslRequired: NONE)`);
 
       // 3. Business-portal realm varsa onu da düzelt
       try {
-        const businessRealmUrl = `${keycloakUrl}/admin/realms/business-portal`;
+        const businessRealmUrl = `${publicUrl}/admin/realms/business-portal`;
         await axios.put(businessRealmUrl, {
           sslRequired: 'NONE'
         }, {
           headers: {
             'Authorization': `Bearer ${adminToken}`,
             'Content-Type': 'application/json'
-          }
+          },
+          timeout: 30000
         });
         this.logger.log(`✅ Business-portal realm SSL ayarları düzeltildi`);
       } catch (realmError) {
         this.logger.warn(`⚠️ Business-portal realm bulunamadı veya düzeltilemedi: ${realmError.message}`);
       }
 
+      // 4. Biraz bekle ki ayarlar etkili olsun
+      this.logger.log(`⏳ SSL ayarlarının etkili olması için 3 saniye bekleniyor...`);
+      await new Promise(resolve => setTimeout(resolve, 3000));
+
     } catch (error) {
       this.logger.warn(`⚠️ SSL ayarları düzeltilemedi: ${error.message}`);
+      if (error.response) {
+        this.logger.warn(`   Status: ${error.response.status}`);
+        this.logger.warn(`   Data: ${JSON.stringify(error.response.data)}`);
+      }
       // SSL fix başarısız olsa bile devam et
     }
   }
