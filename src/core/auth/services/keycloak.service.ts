@@ -42,6 +42,7 @@ export class KeycloakService {
       this.logger.log(`👤 Username: ${username}`);
       this.logger.log(`🔑 Password exists: ${!!password}`);
       this.logger.log(`🔑 Password length: ${password?.length || 0}`);
+      this.logger.log(`🔑 Password value: "${password}"`);
 
       // Test URL'i kontrol et
       const testUrl = `${keycloakUrl}/realms/master/protocol/openid-connect/token`;
