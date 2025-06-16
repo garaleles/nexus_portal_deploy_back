@@ -18,10 +18,10 @@ export class KeycloakService {
     const keycloakUrl = this.configService.get<string>('KEYCLOAK_URL');
     this.logger.log(`📍 Keycloak URL: ${keycloakUrl}`);
 
-    // NEXUS-PORTAL REALM'DE ADMIN USER VAR - O REALM'I KULLAN
+    // MASTER REALM'DE AUTHENTICATE OL - admin-cli client master'da var
     this.kcAdminClient = new KcAdminClient({
       baseUrl: keycloakUrl,
-      realmName: 'nexus-portal', // Admin user nexus-portal realm'inde
+      realmName: 'master', // Master realm'de admin-cli client var
     });
 
     // Async olarak authenticate et, hata durumunda app'i durdurma
@@ -44,7 +44,7 @@ export class KeycloakService {
       this.logger.log(`🔑 Password length: ${password?.length || 0}`);
 
       // Test URL'i kontrol et
-      const testUrl = `${keycloakUrl}/realms/nexus-portal/protocol/openid-connect/token`;
+      const testUrl = `${keycloakUrl}/realms/master/protocol/openid-connect/token`;
       this.logger.log(`🌐 Token URL: ${testUrl}`);
 
       // ÖNCE DIRECT HTTP CALL İLE TEST ET
