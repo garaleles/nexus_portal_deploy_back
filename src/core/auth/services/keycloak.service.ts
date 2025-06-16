@@ -22,24 +22,36 @@ export class KeycloakService {
     try {
       const username = this.configService.get<string>('KEYCLOAK_ADMIN_USERNAME');
       const password = this.configService.get<string>('KEYCLOAK_ADMIN_PASSWORD');
+      const keycloakUrl = this.configService.get<string>('KEYCLOAK_URL');
 
-      this.logger.debug(`Keycloak Admin Auth - Username: ${username}`);
-      this.logger.debug(`Keycloak Admin Auth - Password exists: ${!!password}`);
-      this.logger.debug(`Keycloak Admin Auth - URL: ${this.configService.get<string>('KEYCLOAK_URL')}`);
+      this.logger.log(`🔐 Keycloak Admin Auth başlatılıyor...`);
+      this.logger.log(`📍 URL: ${keycloakUrl}`);
+      this.logger.log(`👤 Username: ${username}`);
+      this.logger.log(`🔑 Password exists: ${!!password}`);
+      this.logger.log(`🔑 Password length: ${password?.length || 0}`);
 
+      // MASTER REALM'DE AUTHENTICATE OL
       await this.kcAdminClient.auth({
-        username: username,
-        password: password,
-        clientId: 'admin-cli',
+        username,
+        password,
         grantType: 'password',
+        clientId: 'admin-cli',
+        totp: undefined, // TOTP yoksa undefined
       });
-      this.logger.log(`Keycloak Admin Client başarıyla kimlik doğrulandı.`);
+
+      this.logger.log(`✅ Keycloak Admin Client başarıyla kimlik doğrulandı.`);
       this.initialized = true;
     } catch (error) {
-      this.logger.error(`Keycloak Admin Client kimlik doğrulaması başarısız oldu:`, error.message);
-      this.logger.error(`Error response:`, error.response?.data || error);
+      this.logger.error(`❌ Keycloak Admin Client kimlik doğrulaması başarısız:`, error.message);
+
+      // Detaylı hata bilgisi
+      if (error.response) {
+        this.logger.error(`📡 HTTP Status: ${error.response.status}`);
+        this.logger.error(`📡 Response Data:`, error.response.data);
+      }
+
       this.initialized = false;
-      throw new InternalServerErrorException(`Keycloak Admin Client kimlik doğrulaması yapılamadı.`);
+      throw new InternalServerErrorException(`Keycloak Admin Client kimlik doğrulaması yapılamadı: ${error.message}`);
     }
   }
 
