@@ -39,6 +39,11 @@ export class KeycloakService {
       this.logger.log(`📍 URL: ${keycloakUrl}`);
       this.logger.log(`👤 Username: ${username}`);
       this.logger.log(`🔑 Password exists: ${!!password}`);
+      this.logger.log(`🔑 Password length: ${password?.length || 0}`);
+
+      // Test URL'i kontrol et
+      const testUrl = `${keycloakUrl}/realms/master/protocol/openid-connect/token`;
+      this.logger.log(`🌐 Token URL: ${testUrl}`);
 
       // Master realm'de authenticate ol
       await this.kcAdminClient.auth({
@@ -53,6 +58,13 @@ export class KeycloakService {
     } catch (error) {
       this.logger.error(`❌ Keycloak Admin Client kimlik doğrulaması başarısız:`, error.message);
       this.logger.error(`🔍 Hata detayı:`, error);
+
+      // Eğer response varsa, detaylarını logla
+      if (error.response) {
+        this.logger.error(`📡 HTTP Status: ${error.response.status}`);
+        this.logger.error(`📡 Response Data:`, error.response.data);
+      }
+
       this.initialized = false;
       throw error; // Hatayı yukarı fırlat
     }
