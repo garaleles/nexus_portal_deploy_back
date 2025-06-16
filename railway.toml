@@ -24,10 +24,10 @@ DB_DATABASE = "${{Postgres.PGDATABASE}}"
 # JWT Configuration
 JWT_SECRET = "your-super-secure-jwt-secret-min-32-chars-here!"
 
-# Railway Internal Network - Primary
-KEYCLOAK_URL = "http://business-portal-keycloak.railway.internal:8080"
-# Fallback URL - Public domain (cold start durumunda)
-KEYCLOAK_PUBLIC_URL = "https://business-portal-keycloak-production.up.railway.app"
+# Railway Public Network - HTTPS Required
+KEYCLOAK_URL = "https://business-portal-keycloak-production.up.railway.app"
+# Internal network'te HTTPS sorunu olduğu için public URL kullanıyoruz
+# KEYCLOAK_INTERNAL_URL = "http://business-portal-keycloak.railway.internal:8080"
 KEYCLOAK_REALM = "nexus-portal"  
 KEYCLOAK_CLIENT_ID = "business-portal"
 KEYCLOAK_CLIENT_SECRET = "jqoXGSxdIoFpouOf8uHtKsyjyzO3M4jf"

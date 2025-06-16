@@ -33,8 +33,8 @@ ENV KC_HOSTNAME_STRICT_BACKCHANNEL=false
 ENV KC_HTTPS_REQUIRED=none
 ENV KC_SPI_TRUSTSTORE_FILE_DISABLED=true
 ENV KC_SPI_CONNECTIONS_HTTP_CLIENT_DEFAULT_DISABLE_TRUST_MANAGER=true
-ENV KC_SPI_HOSTNAME_DEFAULT_FRONTEND_URL=http://business-portal-keycloak.railway.internal:8080
-ENV KC_SPI_HOSTNAME_DEFAULT_ADMIN_URL=http://business-portal-keycloak.railway.internal:8080
+ENV KC_SPI_HOSTNAME_DEFAULT_FRONTEND_URL=https://business-portal-keycloak-production.up.railway.app
+ENV KC_SPI_HOSTNAME_DEFAULT_ADMIN_URL=https://business-portal-keycloak-production.up.railway.app
 
 # Memory ayarları
 ENV JAVA_OPTS="-Xms256m -Xmx768m -XX:MetaspaceSize=96M -XX:MaxMetaspaceSize=256m"
