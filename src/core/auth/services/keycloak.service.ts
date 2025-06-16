@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import KcAdminClient from '@keycloak/keycloak-admin-client';
 import UserRepresentation from '@keycloak/keycloak-admin-client/lib/defs/userRepresentation';
 import CredentialRepresentation from '@keycloak/keycloak-admin-client/lib/defs/credentialRepresentation';
+import axios, { AxiosResponse } from 'axios';
 
 @Injectable()
 export class KeycloakService {
@@ -53,31 +54,65 @@ export class KeycloakService {
       this.logger.log(`🔑 Password DEBUG: "${password}"`);
       this.logger.log(`🌐 Token URL: ${keycloakUrl}/realms/master/protocol/openid-connect/token`);
 
-      // ÖNCE URL'yi test et
-      this.logger.log(`🧪 Keycloak URL'sine ping atılıyor...`);
-      try {
-        const response = await fetch(`${keycloakUrl}/health/ready`);
-        this.logger.log(`✅ Keycloak health check: ${response.status}`);
+      // ÖNCE URL'yi test et - AXIOS ile
+      this.logger.log(`🧪 Keycloak URL'sine ping atılıyor (AXIOS)...`);
 
-        // Eğer 404 alıyorsa, alternatif endpoint'leri dene
-        if (response.status === 404) {
-          this.logger.warn(`❌ /health/ready endpoint bulunamadı, alternatif endpoint'ler deneniyor...`);
-
-          // Basit admin console endpoint'i dene
-          const adminResponse = await fetch(`${keycloakUrl}/admin/`);
-          this.logger.log(`🔍 Admin console check: ${adminResponse.status}`);
-
-          // Root endpoint'i dene
-          const rootResponse = await fetch(`${keycloakUrl}/`);
-          this.logger.log(`🔍 Root endpoint check: ${rootResponse.status}`);
+      const axiosConfig = {
+        timeout: 30000, // 30 saniye timeout
+        headers: {
+          'Accept': 'application/json',
+          'User-Agent': 'Business-Portal-Backend/1.0'
+        },
+        validateStatus: function (status: number) {
+          return status < 500; // 500'den küçük tüm status'leri kabul et
         }
-      } catch (healthError) {
-        this.logger.error(`❌ Keycloak health check FAILED: ${healthError.message}`);
-        this.logger.error(`❌ Bu genellikle şu anlama gelir:`);
-        this.logger.error(`   1. Keycloak servisi çalışmıyor`);
-        this.logger.error(`   2. KEYCLOAK_URL environment variable'ı yanlış`);
-        this.logger.error(`   3. Network connectivity sorunu var`);
+      };
+
+      try {
+        // Railway internal network'te farklı endpoint'ler dene
+        const endpoints = [
+          '/health/ready',
+          '/health',
+          '/admin/',
+          '/'
+        ];
+
+        let healthSuccess = false;
+
+        for (const endpoint of endpoints) {
+          try {
+            this.logger.log(`🔍 AXIOS ile test ediliyor: ${keycloakUrl}${endpoint}`);
+            const response: AxiosResponse = await axios.get(`${keycloakUrl}${endpoint}`, axiosConfig);
+            this.logger.log(`📊 ${endpoint} response: ${response.status}`);
+
+            if (response.status < 400) {
+              this.logger.log(`✅ Keycloak AXIOS bağlantısı başarılı: ${endpoint}`);
+              healthSuccess = true;
+              break;
+            }
+          } catch (endpointError: any) {
+            this.logger.warn(`⚠️ ${endpoint} AXIOS başarısız: ${endpointError.message}`);
+            if (endpointError.response) {
+              this.logger.warn(`   Status: ${endpointError.response.status}`);
+            }
+          }
+        }
+
+        if (!healthSuccess) {
+          throw new Error('Tüm AXIOS health check endpoint\'leri başarısız');
+        }
+
+      } catch (healthError: any) {
+        this.logger.error(`❌ Keycloak AXIOS health check FAILED: ${healthError.message}`);
+        this.logger.error(`❌ Railway networking sorunu olabilir:`);
+        this.logger.error(`   1. Internal network: http://business-portal-keycloak.railway.internal:8080`);
+        this.logger.error(`   2. Public network: https://business-portal-keycloak-production.up.railway.app`);
+        this.logger.error(`   3. Keycloak servisi henüz başlamadı (cold start)`);
         this.logger.error(`❌ Mevcut KEYCLOAK_URL: ${keycloakUrl}`);
+
+        // Cold start için biraz bekle
+        this.logger.log(`⏳ Keycloak cold start için 10 saniye bekleniyor...`);
+        await new Promise(resolve => setTimeout(resolve, 10000));
       }
 
       // MASTER REALM'DE AUTHENTICATE OL
@@ -92,39 +127,46 @@ export class KeycloakService {
       } catch (authError) {
         this.logger.error(`❌ Admin-cli ile authentication başarısız. Manuel token endpoint'i deneniyor...`);
 
-        // Manuel token request
+        // Manuel token request - AXIOS ile
         const tokenUrl = `${keycloakUrl}/realms/master/protocol/openid-connect/token`;
-        this.logger.log(`🔗 Token URL: ${tokenUrl}`);
+        this.logger.log(`🔗 Token URL (AXIOS): ${tokenUrl}`);
 
         try {
-          const tokenResponse = await fetch(tokenUrl, {
-            method: 'POST',
+          const tokenData = new URLSearchParams({
+            grant_type: 'password',
+            client_id: 'admin-cli',
+            username: username,
+            password: password,
+          });
+
+          const tokenResponse: AxiosResponse = await axios.post(tokenUrl, tokenData, {
             headers: {
               'Content-Type': 'application/x-www-form-urlencoded',
             },
-            body: new URLSearchParams({
-              grant_type: 'password',
-              client_id: 'admin-cli',
-              username: username,
-              password: password,
-            }),
+            timeout: 30000,
+            validateStatus: function (status: number) {
+              return status < 500; // 500'den küçük tüm status'leri kabul et
+            }
           });
 
-          this.logger.log(`🔗 Manuel token response status: ${tokenResponse.status}`);
+          this.logger.log(`🔗 Manuel AXIOS token response status: ${tokenResponse.status}`);
 
-          if (!tokenResponse.ok) {
-            const errorText = await tokenResponse.text();
-            this.logger.error(`❌ Manuel token request failed: ${errorText}`);
+          if (tokenResponse.status >= 400) {
+            this.logger.error(`❌ Manuel AXIOS token request failed: ${JSON.stringify(tokenResponse.data)}`);
           } else {
-            const tokenData = await tokenResponse.json();
-            this.logger.log(`✅ Manuel token request başarılı!`);
+            const tokenResponseData = tokenResponse.data;
+            this.logger.log(`✅ Manuel AXIOS token request başarılı!`);
 
             // Token'ı manual olarak set et
-            this.kcAdminClient.accessToken = tokenData.access_token;
-            this.kcAdminClient.refreshToken = tokenData.refresh_token;
+            this.kcAdminClient.accessToken = tokenResponseData.access_token;
+            this.kcAdminClient.refreshToken = tokenResponseData.refresh_token;
           }
-        } catch (manualTokenError) {
-          this.logger.error(`❌ Manuel token request error: ${manualTokenError.message}`);
+        } catch (manualTokenError: any) {
+          this.logger.error(`❌ Manuel AXIOS token request error: ${manualTokenError.message}`);
+          if (manualTokenError.response) {
+            this.logger.error(`❌ AXIOS response status: ${manualTokenError.response.status}`);
+            this.logger.error(`❌ AXIOS response data: ${JSON.stringify(manualTokenError.response.data)}`);
+          }
           throw authError; // Orijinal hatayı fırlat
         }
       }
@@ -649,7 +691,7 @@ export class KeycloakService {
     }
   }
 
-  // Keycloak'tan token almak için bir metod (örneğin kullanıcı girişi için)
+  // Keycloak'tan token almak için bir metod (AXIOS ile)
   async getToken(username: string, password: string): Promise<any> {
     const url = `${this.configService.get<string>('KEYCLOAK_URL')}/realms/${this.getRealm()}/protocol/openid-connect/token`;
     const clientId = this.configService.get<string>('KEYCLOAK_CLIENT_ID');
@@ -663,25 +705,29 @@ export class KeycloakService {
     params.append('password', password);
 
     try {
-      const response = await fetch(url, {
-        method: 'POST',
+      const response: AxiosResponse = await axios.post(url, params.toString(), {
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
         },
-        body: params.toString(),
+        timeout: 30000,
+        validateStatus: function (status: number) {
+          return status < 500; // 500'den küçük tüm status'leri kabul et
+        }
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        this.logger.error(`Keycloak'tan token alınırken hata: ${response.status} - ${JSON.stringify(errorData)}`);
+      if (response.status >= 400) {
+        this.logger.error(`Keycloak'tan token alınırken AXIOS hata: ${response.status} - ${JSON.stringify(response.data)}`);
         throw new UnauthorizedException('Keycloak kimlik doğrulaması başarısız oldu.');
       }
 
-      const data = await response.json();
-      this.logger.log(`Keycloak'tan token başarıyla alındı.`);
-      return data;
-    } catch (error) {
-      this.logger.error(`Keycloak token alma işleminde ağ hatası:`, error.message);
+      this.logger.log(`Keycloak'tan token başarıyla alındı (AXIOS).`);
+      return response.data;
+    } catch (error: any) {
+      this.logger.error(`Keycloak token alma işleminde AXIOS ağ hatası:`, error.message);
+      if (error.response) {
+        this.logger.error(`AXIOS response status: ${error.response.status}`);
+        this.logger.error(`AXIOS response data: ${JSON.stringify(error.response.data)}`);
+      }
       throw new InternalServerErrorException(`Keycloak token alma işleminde ağ hatası: ${error.message}`);
     }
   }
