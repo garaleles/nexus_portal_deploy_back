@@ -17,9 +17,10 @@ export class KeycloakService {
     const keycloakUrl = this.configService.get<string>('KEYCLOAK_URL');
     this.logger.log(`📍 Keycloak URL: ${keycloakUrl}`);
 
+    // NEXUS-PORTAL REALM'DE ADMIN USER VAR - O REALM'I KULLAN
     this.kcAdminClient = new KcAdminClient({
       baseUrl: keycloakUrl,
-      realmName: 'master', // Admin işlemleri için master realm
+      realmName: 'nexus-portal', // Admin user nexus-portal realm'inde
     });
 
     // Async olarak authenticate et, hata durumunda app'i durdurma
@@ -42,10 +43,38 @@ export class KeycloakService {
       this.logger.log(`🔑 Password length: ${password?.length || 0}`);
 
       // Test URL'i kontrol et
-      const testUrl = `${keycloakUrl}/realms/master/protocol/openid-connect/token`;
+      const testUrl = `${keycloakUrl}/realms/nexus-portal/protocol/openid-connect/token`;
       this.logger.log(`🌐 Token URL: ${testUrl}`);
 
-      // Master realm'de authenticate ol
+      // ÖNCE DIRECT HTTP CALL İLE TEST ET
+      this.logger.log(`🧪 Direct HTTP call ile test ediliyor...`);
+
+      const response = await fetch(testUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({
+          grant_type: 'password',
+          client_id: 'admin-cli',
+          username: username,
+          password: password,
+        }),
+      });
+
+      this.logger.log(`📡 HTTP Response Status: ${response.status}`);
+      this.logger.log(`📡 HTTP Response OK: ${response.ok}`);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        this.logger.error(`📡 HTTP Error Response: ${errorText}`);
+        throw new Error(`HTTP ${response.status}: ${errorText}`);
+      }
+
+      const tokenData = await response.json();
+      this.logger.log(`✅ Direct HTTP call başarılı! Token alındı.`);
+
+      // ŞIMDI KEYCLOAK ADMIN CLIENT İLE DENE
       await this.kcAdminClient.auth({
         username: username,
         password: password,
@@ -63,6 +92,7 @@ export class KeycloakService {
       if (error.response) {
         this.logger.error(`📡 HTTP Status: ${error.response.status}`);
         this.logger.error(`📡 Response Data:`, error.response.data);
+        this.logger.error(`📡 Response Headers:`, error.response.headers);
       }
 
       this.initialized = false;
