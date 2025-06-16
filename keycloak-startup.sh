@@ -4,7 +4,12 @@ echo "🚀 Keycloak startup script başlatılıyor..."
 
 # Database bağlantısını bekle
 echo "⏳ Database bağlantısı kontrol ediliyor..."
-until pg_isready -h $PGHOST -p $PGPORT -U $PGUSER; do
+echo "🔍 DB Host: $DATABASE_HOST"
+echo "🔍 DB Port: $DATABASE_PORT"
+echo "🔍 DB User: $DATABASE_USER"
+
+# Railway PostgreSQL variables kullan
+until pg_isready -h $DATABASE_HOST -p $DATABASE_PORT -U $DATABASE_USER; do
   echo "⏳ PostgreSQL henüz hazır değil, bekleniyor..."
   sleep 2
 done

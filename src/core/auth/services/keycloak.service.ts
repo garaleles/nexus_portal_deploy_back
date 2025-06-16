@@ -29,6 +29,17 @@ export class KeycloakService {
       this.logger.log(`👤 Username: ${username}`);
       this.logger.log(`🔑 Password exists: ${!!password}`);
       this.logger.log(`🔑 Password length: ${password?.length || 0}`);
+      this.logger.log(`🔑 Password DEBUG: "${password}"`);
+      this.logger.log(`🌐 Token URL: ${keycloakUrl}/realms/master/protocol/openid-connect/token`);
+
+      // ÖNCE URL'yi test et
+      this.logger.log(`🧪 Keycloak URL'sine ping atılıyor...`);
+      try {
+        const response = await fetch(`${keycloakUrl}/health/ready`);
+        this.logger.log(`✅ Keycloak health check: ${response.status}`);
+      } catch (healthError) {
+        this.logger.error(`❌ Keycloak health check FAILED: ${healthError.message}`);
+      }
 
       // MASTER REALM'DE AUTHENTICATE OL
       await this.kcAdminClient.auth({
@@ -47,7 +58,15 @@ export class KeycloakService {
       // Detaylı hata bilgisi
       if (error.response) {
         this.logger.error(`📡 HTTP Status: ${error.response.status}`);
-        this.logger.error(`📡 Response Data:`, error.response.data);
+        this.logger.error(`📡 Response Data:`, JSON.stringify(error.response.data, null, 2));
+        this.logger.error(`📡 Response Headers:`, JSON.stringify(error.response.headers, null, 2));
+      }
+
+      // Axios request detayları
+      if (error.config) {
+        this.logger.error(`📡 Request URL: ${error.config.url}`);
+        this.logger.error(`📡 Request Method: ${error.config.method}`);
+        this.logger.error(`📡 Request Data:`, error.config.data);
       }
 
       this.initialized = false;
