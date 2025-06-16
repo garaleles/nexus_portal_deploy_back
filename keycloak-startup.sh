@@ -19,5 +19,11 @@ echo "✅ PostgreSQL hazır!"
 # Keycloak'u başlat
 echo "🔐 Keycloak başlatılıyor..."
 /opt/keycloak/bin/kc.sh start --optimized --import-realm \
+  --http-enabled=true \
+  --hostname-strict=false \
+  --hostname-strict-https=false \
+  --https-required=none \
   --spi-truststore-file-disabled=true \
-  --spi-connections-http-client-default-disable-trust-manager=true 
+  --spi-connections-http-client-default-disable-trust-manager=true \
+  --spi-hostname-default-frontend-url="http://business-portal-keycloak.railway.internal:8080" \
+  --spi-hostname-default-admin-url="http://business-portal-keycloak.railway.internal:8080" 
