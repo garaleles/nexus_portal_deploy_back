@@ -5,12 +5,19 @@ FROM quay.io/keycloak/keycloak:24.0
 USER root
 WORKDIR /opt/keycloak
 
+# PostgreSQL client yükle (pg_isready için)
+RUN microdnf install -y postgresql && microdnf clean all
+
 # Realm yapılandırma dosyasını kopyala
 # Bu dosya, Keycloak başladığında otomatik olarak içe aktarılacak.
 COPY keycloak-realm-config.json /opt/keycloak/data/import/
 
 # Cache konfigürasyonu kopyala (eğer varsa)
 COPY cache-ispn-local.xml /opt/keycloak/conf/
+
+# Startup script'i kopyala
+COPY keycloak-startup.sh /opt/keycloak/bin/
+RUN chmod +x /opt/keycloak/bin/keycloak-startup.sh
 
 # Railway için ortam değişkenleri
 # Bu değişkenler Railway servis ayarlarında tanımlanmalıdır.
@@ -35,11 +42,9 @@ RUN /opt/keycloak/bin/kc.sh build --db=postgres
 # Port expose
 EXPOSE 8080
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=90s --retries=3 \
+# Health check - daha uzun startup time
+HEALTHCHECK --interval=30s --timeout=15s --start-period=120s --retries=5 \
   CMD curl -f http://localhost:8080/health/ready || exit 1
 
-# Keycloak'ı başlat
-# --import-realm flag'i sayesinde başlangıçta realm'i içe aktaracak.
-ENTRYPOINT ["/opt/keycloak/bin/kc.sh"]
-CMD ["start", "--import-realm", "--optimized"] 
+# Startup script'i çalıştır
+ENTRYPOINT ["/opt/keycloak/bin/keycloak-startup.sh"] 
