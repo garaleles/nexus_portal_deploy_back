@@ -13,7 +13,13 @@ export class KeycloakService {
 
   constructor(private configService: ConfigService) {
     // Primary URL ile başla
-    const primaryUrl = this.configService.get<string>('KEYCLOAK_URL');
+    let primaryUrl = this.configService.get<string>('KEYCLOAK_URL');
+
+    // 🔧 URL FIX: Railway environment variable parsing sorunu
+    if (primaryUrl && primaryUrl.includes('KEYCLOAK_URL=')) {
+      primaryUrl = primaryUrl.replace('KEYCLOAK_URL=', '');
+      console.log(`⚠️ KEYCLOAK_URL constructor'da prefix sorunu tespit edildi, düzeltildi: ${primaryUrl}`);
+    }
 
     this.kcAdminClient = new KcAdminClient({
       baseUrl: primaryUrl,
@@ -25,8 +31,19 @@ export class KeycloakService {
   }
 
   private async authenticateWithRetry(maxRetries: number = 3, delay: number = 5000) {
-    const primaryUrl = this.configService.get<string>('KEYCLOAK_URL');
-    const fallbackUrl = this.configService.get<string>('KEYCLOAK_PUBLIC_URL');
+    let primaryUrl = this.configService.get<string>('KEYCLOAK_URL');
+    let fallbackUrl = this.configService.get<string>('KEYCLOAK_PUBLIC_URL');
+
+    // 🔧 URL FIX: Railway environment variable parsing sorunu
+    if (primaryUrl && primaryUrl.includes('KEYCLOAK_URL=')) {
+      primaryUrl = primaryUrl.replace('KEYCLOAK_URL=', '');
+      this.logger.warn(`⚠️ KEYCLOAK_URL retry'da prefix sorunu tespit edildi, düzeltildi: ${primaryUrl}`);
+    }
+
+    if (fallbackUrl && fallbackUrl.includes('KEYCLOAK_PUBLIC_URL=')) {
+      fallbackUrl = fallbackUrl.replace('KEYCLOAK_PUBLIC_URL=', '');
+      this.logger.warn(`⚠️ KEYCLOAK_PUBLIC_URL retry'da prefix sorunu tespit edildi, düzeltildi: ${fallbackUrl}`);
+    }
 
     // Önce primary URL ile dene
     for (let i = 0; i < maxRetries; i++) {
@@ -81,7 +98,13 @@ export class KeycloakService {
     try {
       const username = this.configService.get<string>('KEYCLOAK_ADMIN_USERNAME');
       const password = this.configService.get<string>('KEYCLOAK_ADMIN_PASSWORD');
-      const keycloakUrl = this.configService.get<string>('KEYCLOAK_URL');
+      let keycloakUrl = this.configService.get<string>('KEYCLOAK_URL');
+
+      // 🔧 URL FIX: Railway environment variable parsing sorunu
+      if (keycloakUrl && keycloakUrl.includes('KEYCLOAK_URL=')) {
+        keycloakUrl = keycloakUrl.replace('KEYCLOAK_URL=', '');
+        this.logger.warn(`⚠️ KEYCLOAK_URL environment variable'ında prefix sorunu tespit edildi, düzeltildi: ${keycloakUrl}`);
+      }
 
       this.logger.log(`🔐 Keycloak Admin Auth başlatılıyor...`);
       this.logger.log(`📍 URL: ${keycloakUrl}`);
