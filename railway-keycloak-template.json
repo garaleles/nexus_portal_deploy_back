@@ -17,6 +17,8 @@
     "KC_HOSTNAME_STRICT_HTTPS": "false", 
     "KC_HTTP_ENABLED": "true",
     "KC_HOSTNAME_STRICT_BACKCHANNEL": "false",
+    "KC_SPI_TRUSTSTORE_FILE_DISABLED": "true",
+    "KC_SPI_CONNECTIONS_HTTP_CLIENT_DEFAULT_DISABLE_TRUST_MANAGER": "true",
     "KC_DB": "postgres",
     "KC_DB_URL": "jdbc:postgresql://${{Postgres.PGHOST}}:${{Postgres.PGPORT}}/${{Postgres.PGDATABASE}}",
     "KC_DB_USERNAME": "${{Postgres.PGUSER}}",
