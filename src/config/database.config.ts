@@ -33,7 +33,7 @@ export default registerAs('database', (): TypeOrmModuleOptions => {
             type: 'postgres',
             url: databaseUrl,
             entities: [__dirname + '/../**/*.entity{.ts,.js}'],
-            synchronize: process.env.NODE_ENV !== 'production',
+            synchronize: true, // Railway deployment için geçici olarak true
             logging: false,
 
             // Railway için başlangıç retry stratejisi
@@ -88,7 +88,7 @@ export default registerAs('database', (): TypeOrmModuleOptions => {
             password: dbPassword,
             database: dbDatabase,
             entities: [__dirname + '/../**/*.entity{.ts,.js}'],
-            synchronize: process.env.NODE_ENV !== 'production',
+            synchronize: true, // Railway deployment için geçici olarak true
             logging: false,
 
             // Railway için başlangıç retry stratejisi
