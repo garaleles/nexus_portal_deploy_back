@@ -127,9 +127,10 @@ export class KeycloakService {
       } catch (authError) {
         this.logger.error(`❌ Admin-cli ile authentication başarısız. Manuel token endpoint'i deneniyor...`);
 
-        // Manuel token request - AXIOS ile
-        const tokenUrl = `${keycloakUrl}/realms/master/protocol/openid-connect/token`;
-        this.logger.log(`🔗 Token URL (AXIOS): ${tokenUrl}`);
+        // Manuel token request - HTTPS gerekiyorsa public domain kullan
+        const publicKeycloakUrl = 'https://business-portal-keycloak-production.up.railway.app';
+        const tokenUrl = `${publicKeycloakUrl}/realms/master/protocol/openid-connect/token`;
+        this.logger.log(`🔗 Token URL (AXIOS - PUBLIC): ${tokenUrl}`);
 
         try {
           const tokenData = new URLSearchParams({
@@ -691,9 +692,10 @@ export class KeycloakService {
     }
   }
 
-  // Keycloak'tan token almak için bir metod (AXIOS ile)
+  // Keycloak'tan token almak için bir metod (AXIOS ile - PUBLIC domain)
   async getToken(username: string, password: string): Promise<any> {
-    const url = `${this.configService.get<string>('KEYCLOAK_URL')}/realms/${this.getRealm()}/protocol/openid-connect/token`;
+    const publicKeycloakUrl = 'https://business-portal-keycloak-production.up.railway.app';
+    const url = `${publicKeycloakUrl}/realms/${this.getRealm()}/protocol/openid-connect/token`;
     const clientId = this.configService.get<string>('KEYCLOAK_CLIENT_ID');
     const clientSecret = this.configService.get<string>('KEYCLOAK_CLIENT_SECRET');
 
