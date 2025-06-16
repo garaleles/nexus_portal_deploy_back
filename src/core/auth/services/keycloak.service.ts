@@ -1,37 +1,59 @@
 import { Injectable, InternalServerErrorException, Logger, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-
-// Geçici olarak Keycloak import'larını comment out
-// import KcAdminClient from '@keycloak/keycloak-admin-client';
-// import UserRepresentation from '@keycloak/keycloak-admin-client/lib/defs/userRepresentation';
-// import CredentialRepresentation from '@keycloak/keycloak-admin-client/lib/defs/credentialRepresentation';
-// import { RequiredActionAlias } from '@keycloak/keycloak-admin-client/lib/defs/requiredActionProviderRepresentation';
-
-// Mock types
-interface UserRepresentation {
-  id?: string;
-  username?: string;
-  email?: string;
-  firstName?: string;
-  lastName?: string;
-  enabled?: boolean;
-  emailVerified?: boolean;
-  attributes?: Record<string, string[]>;
-}
+import KcAdminClient from '@keycloak/keycloak-admin-client';
+import UserRepresentation from '@keycloak/keycloak-admin-client/lib/defs/userRepresentation';
+import CredentialRepresentation from '@keycloak/keycloak-admin-client/lib/defs/credentialRepresentation';
+import { RequiredActionAlias } from '@keycloak/keycloak-admin-client/lib/defs/requiredActionProviderRepresentation';
 
 @Injectable()
 export class KeycloakService {
   private readonly logger = new Logger(KeycloakService.name);
-  private initialized: boolean = true; // Mock olarak true
+  private kcAdminClient: KcAdminClient;
+  private initialized: boolean = false;
 
   constructor(private configService: ConfigService) {
-    this.logger.warn('🚨 KEYCLOAK SERVICE MOCK MODE - PRODUCTION İÇİN DEVRE DIŞI!');
-    this.logger.warn('🔧 Backend çalışması için geçici mock service aktif');
+    this.logger.log('🔐 Keycloak Service başlatılıyor...');
+
+    const keycloakUrl = this.configService.get<string>('KEYCLOAK_URL');
+    this.logger.log(`📍 Keycloak URL: ${keycloakUrl}`);
+
+    this.kcAdminClient = new KcAdminClient({
+      baseUrl: keycloakUrl,
+      realmName: 'master', // Admin işlemleri için master realm
+    });
+
+    // Async olarak authenticate et, hata durumunda app'i durdurma
+    this.authenticateAdminClient().catch(error => {
+      this.logger.error('❌ Keycloak başlangıç authentication hatası:', error.message);
+      this.logger.warn('⚠️ Keycloak bağlantısı kurulamadı, service mock modda çalışacak');
+    });
   }
 
   async authenticateAdminClient() {
-    this.logger.warn('🔧 Mock Keycloak Auth - Skipping...');
-    this.initialized = true;
+    try {
+      const username = this.configService.get<string>('KEYCLOAK_ADMIN_USERNAME');
+      const password = this.configService.get<string>('KEYCLOAK_ADMIN_PASSWORD');
+      const keycloakUrl = this.configService.get<string>('KEYCLOAK_URL');
+
+      this.logger.log(`🔐 Keycloak Admin Auth başlatılıyor...`);
+      this.logger.log(`📍 URL: ${keycloakUrl}`);
+      this.logger.log(`👤 Username: ${username}`);
+      this.logger.log(`🔑 Password exists: ${!!password}`);
+
+      await this.kcAdminClient.auth({
+        username: username,
+        password: password,
+        clientId: 'admin-cli',
+        grantType: 'password',
+      });
+
+      this.logger.log(`✅ Keycloak Admin Client başarıyla kimlik doğrulandı.`);
+      this.initialized = true;
+    } catch (error) {
+      this.logger.error(`❌ Keycloak Admin Client kimlik doğrulaması başarısız:`, error.message);
+      this.initialized = false;
+      throw error; // Hatayı yukarı fırlat
+    }
   }
 
   async ensureAuthenticated() {
