@@ -11,7 +11,7 @@
   },
   "environment": {
     "KEYCLOAK_ADMIN": "admin",
-    "KEYCLOAK_ADMIN_PASSWORD": "${{KEYCLOAK_ADMIN_PASSWORD}}",
+    "KEYCLOAK_ADMIN_PASSWORD": "SuperSecure123!",
     "KC_PROXY": "edge",
     "KC_HOSTNAME_STRICT": "false",
     "KC_HOSTNAME_STRICT_HTTPS": "false", 
@@ -26,7 +26,7 @@
     "KC_SPI_HOSTNAME_DEFAULT_FRONTEND_URL": "http://business-portal-keycloak.railway.internal:8080",
     "KC_SPI_HOSTNAME_DEFAULT_ADMIN_URL": "http://business-portal-keycloak.railway.internal:8080",
     "KC_DB": "postgres",
-    "KC_DB_URL": "jdbc:postgresql://${{keycloak-postgres.PGHOST}}:${{keycloak-postgres.PGPORT}}/${{keycloak-postgres.PGDATABASE}}",
+    "KC_DB_URL": "${{Postgres.DATABASE_URL}}",
     "KC_DB_USERNAME": "${{keycloak-postgres.PGUSER}}",
     "KC_DB_PASSWORD": "${{keycloak-postgres.PGPASSWORD}}",
     "KC_HEALTH_ENABLED": "true",
@@ -34,7 +34,9 @@
     "KC_LOG_LEVEL": "INFO",
     "KC_FEATURES": "preview,scripts,organization",
     "PORT": "8080",
-    "JAVA_OPTS": "-Xms256m -Xmx768m -XX:MetaspaceSize=96M -XX:MaxMetaspaceSize=256m"
+    "JAVA_OPTS": "-Xms256m -Xmx768m -XX:MetaspaceSize=96M -XX:MaxMetaspaceSize=256m",
+    "KC_BOOTSTRAP_ADMIN_USERNAME": "admin",
+    "KC_BOOTSTRAP_ADMIN_PASSWORD": "SuperSecure123!"
   },
   "healthcheckPath": "/health/ready",
   "healthcheckTimeout": 300,
