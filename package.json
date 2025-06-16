@@ -2,7 +2,6 @@
   "name": "business-portal-back",
   "version": "1.0.0",
   "description": "Business Portal Backend Platform with NestJS, PostgreSQL, and Multi-Tenancy",
-  "type": "module",
   "main": "index.js",
   "scripts": {
     "build": "nest build",
@@ -29,7 +28,7 @@
   },
   "dependencies": {
     "@google-cloud/storage": "^7.10.0",
-    "@keycloak/keycloak-admin-client": "^26.2.5",
+    "@keycloak/keycloak-admin-client": "^24.0.5",
     "@nestjs-modules/mailer": "^1.11.2",
     "@nestjs/axios": "^3.0.2",
     "@nestjs/cache-manager": "^2.2.2",
