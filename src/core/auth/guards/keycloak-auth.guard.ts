@@ -122,7 +122,7 @@ export class KeycloakAuthGuard implements CanActivate {
         // issuer'ı kontrol etmeyelim şimdilik
         ignoreExpiration: false,
         ignoreNotBefore: false,
-        audience: false // Audience kontrolünü de manuel yapalım
+        audience: undefined // Audience kontrolünü manuel yapalım
       }, (err, decoded: any) => {
         if (err) {
           console.log('❌ TOKEN_VERIFY - JWT verify error:', err.message);
