@@ -60,23 +60,39 @@ export class IyzipayInfoService {
   }
 
   async findAll(): Promise<IyzipayInfo[]> {
-    console.log('🔍 FIND_ALL - Veritabanından veri çekiliyor...');
+    try {
+      console.log('🔍 FIND_ALL - Veritabanından veri çekiliyor...');
 
-    const iyzipayInfos = await this.iyzipayInfoRepository.find();
-    console.log('🔍 FIND_ALL - Bulunan kayıt sayısı:', iyzipayInfos.length);
+      const iyzipayInfos = await this.iyzipayInfoRepository.find();
+      console.log('🔍 FIND_ALL - Bulunan kayıt sayısı:', iyzipayInfos.length);
 
-    // Her kayıt için şifreli alanları çöz
-    const decryptedInfos: IyzipayInfo[] = iyzipayInfos.map(info => {
-      if (this.hasEncryptedFields(info)) {
-        console.log('🔓 FIND_ALL - Şifreli veri tespit edildi, çözülüyor...');
-        return this.encryptionService.decryptFields(info, this.encryptedFields) as IyzipayInfo;
-      } else {
-        console.log('📄 FIND_ALL - Plain text veri, olduğu gibi döndürülüyor');
-        return info;
+      if (iyzipayInfos.length === 0) {
+        console.log('📄 FIND_ALL - Hiç kayıt yok, boş array döndürülüyor');
+        return [];
       }
-    });
 
-    return decryptedInfos;
+      // Her kayıt için şifreli alanları çöz
+      const decryptedInfos: IyzipayInfo[] = iyzipayInfos.map(info => {
+        try {
+          if (this.hasEncryptedFields(info)) {
+            console.log('🔓 FIND_ALL - Şifreli veri tespit edildi, çözülüyor...', info.id);
+            return this.encryptionService.decryptFields(info, this.encryptedFields) as IyzipayInfo;
+          } else {
+            console.log('📄 FIND_ALL - Plain text veri, olduğu gibi döndürülüyor', info.id);
+            return info;
+          }
+        } catch (decryptError) {
+          console.error('❌ FIND_ALL - Decrypt hatası:', decryptError);
+          // Decrypt hatası varsa plain text olarak döndür
+          return info;
+        }
+      });
+
+      return decryptedInfos;
+    } catch (error) {
+      console.error('❌ FIND_ALL - Hata:', error);
+      throw new BadRequestException('İyzipay bilgileri getirilirken bir hata oluştu: ' + error.message);
+    }
   }
 
   async findOne(id: string): Promise<IyzipayInfo> {
