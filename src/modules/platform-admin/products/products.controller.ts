@@ -76,6 +76,13 @@ export class ProductsController {
     @Query('subscriptionPlanId') subscriptionPlanId?: string,
     @Query('search') search?: string
   ): Promise<Product[]> {
+    console.log('🚀 PRODUCTS CONTROLLER - findAll endpoint hit!');
+    console.log('📝 PRODUCTS CONTROLLER - Query parameters:', {
+      isActive,
+      subscriptionPlanId,
+      search
+    });
+
     const filters: any = {};
 
     if (isActive !== undefined) {
@@ -90,7 +97,26 @@ export class ProductsController {
       filters.search = search;
     }
 
-    return this.productsService.findAll(filters);
+    console.log('🔍 PRODUCTS CONTROLLER - Filters prepared:', filters);
+
+    try {
+      console.log('📡 PRODUCTS CONTROLLER - Calling service.findAll...');
+      const products = await this.productsService.findAll(filters);
+
+      console.log('✅ PRODUCTS CONTROLLER - Service response:', {
+        count: products.length,
+        firstProductPreview: products[0] ? {
+          id: products[0].id,
+          name: products[0].name,
+          isActive: products[0].isActive
+        } : 'No products'
+      });
+
+      return products;
+    } catch (error) {
+      console.error('❌ PRODUCTS CONTROLLER - Error in findAll:', error);
+      throw error;
+    }
   }
 
   /**

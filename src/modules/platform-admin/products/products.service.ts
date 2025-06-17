@@ -148,20 +148,26 @@ export class ProductsService {
     subscriptionPlanId?: string;
     search?: string;
   }): Promise<Product[]> {
+    console.log('🚀 PRODUCTS SERVICE - findAll called with filters:', filters);
+
     const queryBuilder = this.productRepository.createQueryBuilder('product')
       .leftJoinAndSelect('product.subscriptionPlan', 'subscriptionPlan')
       .leftJoinAndSelect('product.images', 'images')
       .orderBy('images.sortOrder', 'ASC')
       .addOrderBy('product.createdAt', 'DESC');
 
+    console.log('🔍 PRODUCTS SERVICE - Base query builder created');
+
     if (filters?.isActive !== undefined) {
       queryBuilder.andWhere('product.isActive = :isActive', { isActive: filters.isActive });
+      console.log('🔍 PRODUCTS SERVICE - Added isActive filter:', filters.isActive);
     }
 
     if (filters?.subscriptionPlanId) {
       queryBuilder.andWhere('product.subscriptionPlanId = :subscriptionPlanId', {
         subscriptionPlanId: filters.subscriptionPlanId
       });
+      console.log('🔍 PRODUCTS SERVICE - Added subscriptionPlanId filter:', filters.subscriptionPlanId);
     }
 
     if (filters?.search) {
@@ -169,9 +175,30 @@ export class ProductsService {
         '(product.name ILIKE :search OR product.productCode ILIKE :search OR product.description ILIKE :search)',
         { search: `%${filters.search}%` }
       );
+      console.log('🔍 PRODUCTS SERVICE - Added search filter:', filters.search);
     }
 
-    return queryBuilder.getMany();
+    try {
+      console.log('📡 PRODUCTS SERVICE - Executing database query...');
+      console.log('🔍 PRODUCTS SERVICE - Generated SQL:', queryBuilder.getSql());
+
+      const products = await queryBuilder.getMany();
+
+      console.log('✅ PRODUCTS SERVICE - Database query successful:', {
+        count: products.length,
+        products: products.map(p => ({
+          id: p.id,
+          name: p.name,
+          isActive: p.isActive,
+          imagesCount: p.images?.length || 0
+        }))
+      });
+
+      return products;
+    } catch (error) {
+      console.error('❌ PRODUCTS SERVICE - Database error:', error);
+      throw error;
+    }
   }
 
   /**
