@@ -1,5 +1,5 @@
 {
-  "realm": "nexus-portal",
+  "realm": "business-portal",
   "enabled": true,
   "displayName": "Nexus Business Portal",
   "displayNameHtml": "<div class=\"kc-logo-text\"><span>Nexus Business Portal</span></div>",
@@ -55,10 +55,12 @@
       "secret": "lmv5iNnI0H1RyG4oyVCcCYJeqv3vahct",
       "redirectUris": [
         "https://business-portal-frontend-production.up.railway.app/*",
+        "https://frontend-production-0d2c.up.railway.app/*",
         "http://localhost:4200/*"
       ],
       "webOrigins": [
         "https://business-portal-frontend-production.up.railway.app",
+        "https://frontend-production-0d2c.up.railway.app",
         "http://localhost:4200"
       ],
       "publicClient": true,
