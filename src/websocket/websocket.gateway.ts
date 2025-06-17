@@ -23,6 +23,7 @@ interface ConnectedClient {
       ? [
         process.env.FRONTEND_URL,
         'https://business-portal-frontend-production.up.railway.app',
+        'https://frontend-production-0d2c.up.railway.app',
         'https://*.up.railway.app'
       ]
       : ['http://localhost:4200', 'http://localhost:3000'],

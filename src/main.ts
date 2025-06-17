@@ -24,12 +24,13 @@ async function bootstrap() {
                 ? [
                     process.env.FRONTEND_URL,
                     'https://business-portal-frontend-production.up.railway.app',
+                    'https://frontend-production-0d2c.up.railway.app',
                     'https://*.up.railway.app'
                 ]
                 : ['http://localhost:4200', 'http://127.0.0.1:4200'],
             methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
             credentials: true,
-            allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+            allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'x-platform-user', 'x-tenant-id'],
             exposedHeaders: ['Authorization'],
         });
 
