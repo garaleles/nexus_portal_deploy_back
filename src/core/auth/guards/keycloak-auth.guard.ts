@@ -150,7 +150,7 @@ export class KeycloakAuthGuard implements CanActivate {
           // Client kontrolü
           const tokenAud = decoded.aud;
           const tokenAzp = decoded.azp;
-          const tokenClientId = decoded.client_id;
+          const tokenClientId = decoded.client_id || decoded.clientId; // Hem client_id hem clientId kontrol et
 
           const isValidClient = tokenAud === expectedClient ||
             tokenAzp === expectedClient ||
