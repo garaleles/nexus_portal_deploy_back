@@ -65,13 +65,12 @@ export class PublicIyzipayController {
   @Get('active-config')
   async getActiveConfig() {
     const config = await this.iyzipayInfoService.findActive();
-    // Güvenlik için sensitive bilgileri çıkar (apiKey ve secretKey hiçbir zaman frontend'e gönderilmez)
     return {
       currency: config.currency,
       installment: config.installment,
       isTestMode: config.isTestMode,
       installmentOptions: config.installmentOptions,
-      baseUrl: config.baseUrl, // Frontend'in hangi environment'da olduğunu bilmesi için
+      baseUrl: config.baseUrl,
     };
   }
 
@@ -88,39 +87,24 @@ export class PublicIyzipayController {
   }
 
   private async processThreedsCallback(callbackData: any, queryData: any, response: any) {
-    // POST veya GET ile gelen verileri birleştir
     const allData = { ...queryData, ...callbackData };
 
-    console.log('🔄 3DS_CALLBACK - İyzico callback alındı:');
-    console.log('🔄 3DS_CALLBACK - Query Data:', JSON.stringify(queryData, null, 2));
-    console.log('🔄 3DS_CALLBACK - Body Data:', JSON.stringify(callbackData, null, 2));
-    console.log('🔄 3DS_CALLBACK - Merged Data:', JSON.stringify(allData, null, 2));
-
     try {
-      // Callback verilerini query string'e çevir
-      const queryParams = new URLSearchParams();
+      const frontendUrl = this.configService.get<string>('FRONTEND_URL') || 'http://localhost:4200';
 
-      // İyzico'dan gelen tüm parametreleri ekle
+      const queryParams = new URLSearchParams();
       Object.keys(allData).forEach(key => {
         if (allData[key] !== undefined && allData[key] !== null) {
           queryParams.append(key, allData[key].toString());
         }
       });
 
-      const frontendUrl = this.configService.get<string>('FRONTEND_URL') || 'http://localhost:4200';
       const frontendCallbackUrl = `${frontendUrl}/payment/callback?${queryParams.toString()}`;
-
-      console.log('🔄 3DS_CALLBACK - Frontend callback URL:', frontendCallbackUrl);
-
-      // Frontend callback sayfasına redirect et
       response.redirect(frontendCallbackUrl);
 
     } catch (error) {
-      console.error('❌ 3DS_CALLBACK - Hata:', error);
-
-      // Hata durumunda da frontend'e yönlendir
-      const frontendUrl = this.configService.get<string>('FRONTEND_URL') || 'http://localhost:4200';
-      const errorUrl = `${frontendUrl}/payment/callback?error=callback_error&message=${encodeURIComponent(error.message)}`;
+      const fallbackUrl = this.configService.get<string>('FRONTEND_URL') || 'http://localhost:4200';
+      const errorUrl = `${fallbackUrl}/payment/callback?error=callback_error&message=${encodeURIComponent(error.message)}`;
       response.redirect(errorUrl);
     }
   }
