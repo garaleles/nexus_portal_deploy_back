@@ -21,7 +21,8 @@ export class PublicProductsController {
   ) { }
 
   /**
-   * Aktif ürünleri listele (public)
+   * ⚡ RAILWAY OPTIMIZED - Aktif ürünleri listele (public)
+   * DB level pagination ile optimize edildi
    */
   @Get()
   async getActiveProducts(
@@ -29,23 +30,32 @@ export class PublicProductsController {
     @Query('limit') limit?: string,
     @Query('offset') offset?: string
   ): Promise<{ products: Product[], total: number }> {
-    const filters = {
-      isActive: true,
-      search: search
-    };
+    console.log('🚀 PUBLIC_PRODUCTS - getActiveProducts çağrıldı');
 
-    const products = await this.productsService.findAll(filters);
+    const limitNum = Math.min(parseInt(limit) || 12, 50); // Max 50 limit
+    const offsetNum = parseInt(offset) || 0;
 
-    // Sayfalama
-    const limitNum = limit ? parseInt(limit) : 12;
-    const offsetNum = offset ? parseInt(offset) : 0;
+    console.log('📊 PUBLIC_PRODUCTS - Pagination params:', { limitNum, offsetNum, search });
 
-    const paginatedProducts = products.slice(offsetNum, offsetNum + limitNum);
+    try {
+      // ⚡ Railway optimizasyonu: DB level pagination
+      const result = await this.productsService.findAllPaginated({
+        isActive: true,
+        search: search,
+        limit: limitNum,
+        offset: offsetNum
+      });
 
-    return {
-      products: paginatedProducts,
-      total: products.length
-    };
+      console.log('✅ PUBLIC_PRODUCTS - Sonuçlar:', {
+        productsCount: result.products.length,
+        total: result.total
+      });
+
+      return result;
+    } catch (error) {
+      console.error('❌ PUBLIC_PRODUCTS - Hata:', error);
+      return { products: [], total: 0 };
+    }
   }
 
   /**
@@ -54,6 +64,7 @@ export class PublicProductsController {
   @Get(':slug')
   async getProductBySlug(@Param('slug') slug: string): Promise<Product> {
     try {
+      console.log('🔍 PUBLIC_PRODUCTS - getProductBySlug:', slug);
       const product = await this.productsService.findBySlug(slug);
 
       if (!product.isActive) {
@@ -62,6 +73,7 @@ export class PublicProductsController {
 
       return product;
     } catch (error) {
+      console.error('❌ PUBLIC_PRODUCTS - Slug hatası:', error);
       throw new NotFoundException('Ürün bulunamadı');
     }
   }
@@ -73,11 +85,10 @@ export class PublicProductsController {
   async getProductSubscriptionPlans(@Param('slug') slug: string): Promise<SubscriptionPlan[]> {
     const product = await this.getProductBySlug(slug);
 
-    // Tüm aktif planları al
+    // ⚡ Railway optimizasyonu: Cache aktif planları
     const allPlans = await this.subscriptionPlansService.findAll(true);
 
     // Ürün kodu ile eşleşen planları filtrele
-    // Abonelik planı kodunun "/" karakterine kadar olan kısmını alıp ürün kodu ile karşılaştır
     const matchingPlans = allPlans.filter(plan => {
       if (!plan.code || !product.productCode) return false;
 
@@ -89,31 +100,59 @@ export class PublicProductsController {
   }
 
   /**
-   * Popüler ürünler (view count'a göre)
+   * ⚡ RAILWAY OPTIMIZED - Popüler ürünler (view count'a göre)
+   * DB level sorting ile optimize edildi
    */
   @Get('featured/popular')
   async getPopularProducts(@Query('limit') limit?: string): Promise<Product[]> {
-    const allProducts = await this.productsService.findAll({ isActive: true });
+    const limitNum = Math.min(parseInt(limit) || 6, 20); // Max 20 limit
 
-    const limitNum = limit ? parseInt(limit) : 6;
+    console.log('🔥 PUBLIC_PRODUCTS - getPopularProducts:', limitNum);
 
-    return allProducts
-      .sort((a, b) => b.viewCount - a.viewCount)
-      .slice(0, limitNum);
+    try {
+      // ⚡ Railway optimizasyonu: DB level sorting
+      const result = await this.productsService.findAllPaginated({
+        isActive: true,
+        limit: limitNum,
+        offset: 0,
+        orderBy: 'viewCount',
+        orderDirection: 'DESC'
+      });
+
+      console.log('✅ PUBLIC_PRODUCTS - Popular products:', result.products.length);
+      return result.products;
+    } catch (error) {
+      console.error('❌ PUBLIC_PRODUCTS - Popular products hatası:', error);
+      return [];
+    }
   }
 
   /**
-   * Yeni ürünler (createdAt'e göre)
+   * ⚡ RAILWAY OPTIMIZED - Yeni ürünler (createdAt'e göre)
+   * DB level sorting ile optimize edildi
    */
   @Get('featured/latest')
   async getLatestProducts(@Query('limit') limit?: string): Promise<Product[]> {
-    const allProducts = await this.productsService.findAll({ isActive: true });
+    const limitNum = Math.min(parseInt(limit) || 6, 20); // Max 20 limit
 
-    const limitNum = limit ? parseInt(limit) : 6;
+    console.log('🆕 PUBLIC_PRODUCTS - getLatestProducts:', limitNum);
 
-    return allProducts
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-      .slice(0, limitNum);
+    try {
+      // ⚡ Railway optimizasyonu: DB level sorting
+      const result = await this.productsService.findAllPaginated({
+        isActive: true,
+        limit: limitNum,
+        offset: 0,
+        orderBy: 'createdAt',
+        orderDirection: 'DESC'
+      });
+
+      console.log('✅ PUBLIC_PRODUCTS - Latest products:', result.products.length);
+      return result.products;
+    } catch (error) {
+      console.error('❌ PUBLIC_PRODUCTS - Latest products hatası:', error);
+      return [];
+    }
   }
 
   /**
@@ -123,9 +162,11 @@ export class PublicProductsController {
   @HttpCode(HttpStatus.OK)
   async incrementViewCount(@Param('slug') slug: string): Promise<{ success: boolean }> {
     try {
+      console.log('👁️ PUBLIC_PRODUCTS - incrementViewCount:', slug);
       await this.productsService.incrementViewCount(slug);
       return { success: true };
     } catch (error) {
+      console.error('❌ PUBLIC_PRODUCTS - View count hatası:', error);
       throw new NotFoundException('Ürün bulunamadı');
     }
   }

@@ -202,6 +202,134 @@ export class ProductsService {
   }
 
   /**
+   * ⚡ RAILWAY OPTIMIZED - Paginated ürün listesi (Public API için optimize edildi)
+   * DB level pagination ve minimal data fetching
+   */
+  async findAllPaginated(filters?: {
+    isActive?: boolean;
+    subscriptionPlanId?: string;
+    search?: string;
+    limit?: number;
+    offset?: number;
+    orderBy?: 'createdAt' | 'viewCount' | 'name' | 'price';
+    orderDirection?: 'ASC' | 'DESC';
+  }): Promise<{ products: Product[], total: number }> {
+    console.log('🚀 PRODUCTS SERVICE - findAllPaginated called with filters:', filters);
+
+    const limit = Math.min(filters?.limit || 12, 100); // Max 100 güvenlik
+    const offset = filters?.offset || 0;
+    const orderBy = filters?.orderBy || 'createdAt';
+    const orderDirection = filters?.orderDirection || 'DESC';
+
+    // ⚡ Railway optimizasyonu: Ana query - minimal data
+    const queryBuilder = this.productRepository.createQueryBuilder('product')
+      .select([
+        'product.id',
+        'product.productCode',
+        'product.name',
+        'product.slug',
+        'product.description',
+        'product.price',
+        'product.isActive',
+        'product.viewCount',
+        'product.createdAt',
+        'product.updatedAt'
+      ])
+      .leftJoin('product.images', 'images')
+      .addSelect([
+        'images.id',
+        'images.url',
+        'images.secureUrl',
+        'images.altText',
+        'images.isPrimary',
+        'images.sortOrder'
+      ])
+      .where('1=1'); // Base condition
+
+    // Filters
+    if (filters?.isActive !== undefined) {
+      queryBuilder.andWhere('product.isActive = :isActive', { isActive: filters.isActive });
+    }
+
+    if (filters?.subscriptionPlanId) {
+      queryBuilder.andWhere('product.subscriptionPlanId = :subscriptionPlanId', {
+        subscriptionPlanId: filters.subscriptionPlanId
+      });
+    }
+
+    if (filters?.search) {
+      queryBuilder.andWhere(
+        '(product.name ILIKE :search OR product.productCode ILIKE :search OR product.description ILIKE :search)',
+        { search: `%${filters.search}%` }
+      );
+    }
+
+    // ⚡ Railway optimizasyonu: DB level sorting
+    queryBuilder.orderBy(`product.${orderBy}`, orderDirection);
+
+    // Secondary sort by images
+    queryBuilder.addOrderBy('images.sortOrder', 'ASC');
+
+    // ⚡ Railway optimizasyonu: Pagination
+    queryBuilder.skip(offset).take(limit);
+
+    try {
+      console.log('📡 PRODUCTS SERVICE - Executing paginated query...', {
+        limit, offset, orderBy, orderDirection
+      });
+
+      // ⚡ Railway optimizasyonu: Parallel queries
+      const [products, total] = await Promise.all([
+        queryBuilder.getMany(),
+        this.countProducts(filters) // Optimize count query
+      ]);
+
+      console.log('✅ PRODUCTS SERVICE - Paginated query successful:', {
+        productsCount: products.length,
+        total,
+        limit,
+        offset
+      });
+
+      return { products, total };
+    } catch (error) {
+      console.error('❌ PRODUCTS SERVICE - Paginated query error:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * ⚡ RAILWAY OPTIMIZED - Optimize count query (relations olmadan)
+   */
+  private async countProducts(filters?: {
+    isActive?: boolean;
+    subscriptionPlanId?: string;
+    search?: string;
+  }): Promise<number> {
+    const countQuery = this.productRepository.createQueryBuilder('product')
+      .where('1=1');
+
+    if (filters?.isActive !== undefined) {
+      countQuery.andWhere('product.isActive = :isActive', { isActive: filters.isActive });
+    }
+
+    if (filters?.subscriptionPlanId) {
+      countQuery.andWhere('product.subscriptionPlanId = :subscriptionPlanId', {
+        subscriptionPlanId: filters.subscriptionPlanId
+      });
+    }
+
+    if (filters?.search) {
+      countQuery.andWhere(
+        '(product.name ILIKE :search OR product.productCode ILIKE :search OR product.description ILIKE :search)',
+        { search: `%${filters.search}%` }
+      );
+    }
+
+    return await countQuery.getCount();
+  }
+
+  /**
    * ID ile ürün bul (view count artırmaz)
    */
   async findOne(id: string): Promise<Product> {
