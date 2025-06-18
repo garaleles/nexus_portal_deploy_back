@@ -665,11 +665,92 @@ export class EndpointsService {
         requiresAuth: true
       },
       {
+        path: '/api/platform-admin/iyzipay-info/active',
+        method: EndpointMethod.GET,
+        controllerName: 'IyzipayInfoController',
+        actionName: 'findActive',
+        description: 'Aktif Iyzipay konfigürasyonunu getir',
+        category: EndpointCategory.IYZIPAY_MANAGEMENT,
+        requiresAuth: true
+      },
+      {
+        path: '/api/platform-admin/iyzipay-info/test-connection',
+        method: EndpointMethod.GET,
+        controllerName: 'IyzipayInfoController',
+        actionName: 'testConnection',
+        description: 'Iyzipay bağlantısını test et',
+        category: EndpointCategory.IYZIPAY_MANAGEMENT,
+        requiresAuth: true
+      },
+      {
+        path: '/api/platform-admin/iyzipay-info/installments',
+        method: EndpointMethod.GET,
+        controllerName: 'IyzipayInfoController',
+        actionName: 'getAvailableInstallments',
+        description: 'Kullanılabilir taksit seçeneklerini getir',
+        category: EndpointCategory.IYZIPAY_MANAGEMENT,
+        requiresAuth: true
+      },
+      {
         path: '/api/platform-admin/iyzipay-info/:id',
         method: EndpointMethod.GET,
         controllerName: 'IyzipayInfoController',
         actionName: 'findOne',
         description: 'Iyzipay bilgisi detayını getir',
+        category: EndpointCategory.IYZIPAY_MANAGEMENT,
+        requiresAuth: true
+      },
+      {
+        path: '/api/platform-admin/iyzipay-info',
+        method: EndpointMethod.POST,
+        controllerName: 'IyzipayInfoController',
+        actionName: 'create',
+        description: 'Yeni Iyzipay konfigürasyonu oluştur',
+        category: EndpointCategory.IYZIPAY_MANAGEMENT,
+        requiresAuth: true
+      },
+      {
+        path: '/api/platform-admin/iyzipay-info/calculate-installments',
+        method: EndpointMethod.POST,
+        controllerName: 'IyzipayInfoController',
+        actionName: 'calculateInstallments',
+        description: 'Taksit bilgilerini hesapla',
+        category: EndpointCategory.IYZIPAY_MANAGEMENT,
+        requiresAuth: true
+      },
+      {
+        path: '/api/platform-admin/iyzipay-info/process-payment',
+        method: EndpointMethod.POST,
+        controllerName: 'IyzipayInfoController',
+        actionName: 'processPayment',
+        description: 'Ödeme işlemini gerçekleştir',
+        category: EndpointCategory.IYZIPAY_MANAGEMENT,
+        requiresAuth: true
+      },
+      {
+        path: '/api/platform-admin/iyzipay-info/:id',
+        method: EndpointMethod.PATCH,
+        controllerName: 'IyzipayInfoController',
+        actionName: 'update',
+        description: 'Iyzipay konfigürasyonunu güncelle',
+        category: EndpointCategory.IYZIPAY_MANAGEMENT,
+        requiresAuth: true
+      },
+      {
+        path: '/api/platform-admin/iyzipay-info/:id/set-active',
+        method: EndpointMethod.PATCH,
+        controllerName: 'IyzipayInfoController',
+        actionName: 'setActive',
+        description: 'Iyzipay konfigürasyonunu aktif yap',
+        category: EndpointCategory.IYZIPAY_MANAGEMENT,
+        requiresAuth: true
+      },
+      {
+        path: '/api/platform-admin/iyzipay-info/:id',
+        method: EndpointMethod.DELETE,
+        controllerName: 'IyzipayInfoController',
+        actionName: 'remove',
+        description: 'Iyzipay konfigürasyonunu sil',
         category: EndpointCategory.IYZIPAY_MANAGEMENT,
         requiresAuth: true
       },
