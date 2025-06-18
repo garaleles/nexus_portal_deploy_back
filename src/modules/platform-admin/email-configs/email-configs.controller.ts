@@ -30,6 +30,7 @@ export class EmailConfigsController {
   }
 
   @Post()
+  @Roles(PlatformUserRole.SUPER_ADMIN, PlatformUserRole.PLATFORM_ADMIN)
   @ApiOperation({ summary: 'Yeni e-posta yapılandırması oluştur' })
   @ApiResponse({ status: 201, description: 'Başarıyla oluşturuldu', type: EmailConfigResponseDto })
   async create(@Body() createEmailConfigDto: CreateEmailConfigDto) {
@@ -38,6 +39,7 @@ export class EmailConfigsController {
   }
 
   @Get()
+  @Roles(PlatformUserRole.SUPER_ADMIN, PlatformUserRole.PLATFORM_ADMIN, PlatformUserRole.SUPPORT_AGENT)
   @ApiOperation({ summary: 'Tüm e-posta yapılandırmalarını getir (admin panel için şifreler dahil)' })
   @ApiResponse({ status: 200, description: 'Başarılı', type: [EmailConfigResponseDto] })
   async findAll() {
@@ -60,6 +62,7 @@ export class EmailConfigsController {
   }
 
   @Get('active')
+  @Roles(PlatformUserRole.SUPER_ADMIN, PlatformUserRole.PLATFORM_ADMIN, PlatformUserRole.SUPPORT_AGENT)
   @ApiOperation({ summary: 'Aktif e-posta yapılandırmasını getir' })
   @ApiResponse({ status: 200, description: 'Başarılı', type: EmailConfigResponseDto })
   async findActive() {
@@ -68,6 +71,7 @@ export class EmailConfigsController {
   }
 
   @Get(':id')
+  @Roles(PlatformUserRole.SUPER_ADMIN, PlatformUserRole.PLATFORM_ADMIN, PlatformUserRole.SUPPORT_AGENT)
   @ApiOperation({ summary: 'Belirli bir e-posta yapılandırmasını getir' })
   @ApiResponse({ status: 200, description: 'Başarılı', type: EmailConfigResponseDto })
   async findOne(@Param('id') id: string) {
@@ -76,6 +80,7 @@ export class EmailConfigsController {
   }
 
   @Patch(':id')
+  @Roles(PlatformUserRole.SUPER_ADMIN, PlatformUserRole.PLATFORM_ADMIN)
   @ApiOperation({ summary: 'E-posta yapılandırmasını güncelle' })
   @ApiResponse({ status: 200, description: 'Başarıyla güncellendi', type: EmailConfigResponseDto })
   async update(@Param('id') id: string, @Body() updateEmailConfigDto: UpdateEmailConfigDto) {
@@ -84,6 +89,7 @@ export class EmailConfigsController {
   }
 
   @Patch(':id/set-active')
+  @Roles(PlatformUserRole.SUPER_ADMIN, PlatformUserRole.PLATFORM_ADMIN)
   @ApiOperation({ summary: 'Belirli bir yapılandırmayı aktifleştir' })
   @ApiResponse({ status: 200, description: 'Başarıyla aktifleştirildi', type: EmailConfigResponseDto })
   async setActive(@Param('id') id: string) {
@@ -110,6 +116,7 @@ export class EmailConfigsController {
   }
 
   @Post(':id/test')
+  @Roles(PlatformUserRole.SUPER_ADMIN, PlatformUserRole.PLATFORM_ADMIN)
   @ApiOperation({ summary: 'E-posta yapılandırmasını test et' })
   @ApiResponse({ status: 200, description: 'Test başarılı' })
   async testEmailConfig(@Param('id') id: string) {

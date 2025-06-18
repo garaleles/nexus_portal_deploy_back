@@ -430,6 +430,15 @@ export class EndpointsService {
         requiresAuth: true
       },
       {
+        path: '/api/platform-admin/email-configs/active',
+        method: EndpointMethod.GET,
+        controllerName: 'EmailConfigsController',
+        actionName: 'findActive',
+        description: 'Aktif email konfigürasyonunu getir',
+        category: EndpointCategory.EMAIL_CONFIG_MANAGEMENT,
+        requiresAuth: true
+      },
+      {
         path: '/api/platform-admin/email-configs/:id',
         method: EndpointMethod.GET,
         controllerName: 'EmailConfigsController',
@@ -448,11 +457,38 @@ export class EndpointsService {
         requiresAuth: true
       },
       {
+        path: '/api/platform-admin/email-configs/seed-from-env',
+        method: EndpointMethod.POST,
+        controllerName: 'EmailConfigsController',
+        actionName: 'seedFromEnv',
+        description: 'Env dosyasından email konfigürasyonu oluştur',
+        category: EndpointCategory.EMAIL_CONFIG_MANAGEMENT,
+        requiresAuth: true
+      },
+      {
+        path: '/api/platform-admin/email-configs/:id/test',
+        method: EndpointMethod.POST,
+        controllerName: 'EmailConfigsController',
+        actionName: 'testEmailConfig',
+        description: 'Email konfigürasyonunu test et',
+        category: EndpointCategory.EMAIL_CONFIG_MANAGEMENT,
+        requiresAuth: true
+      },
+      {
         path: '/api/platform-admin/email-configs/:id',
         method: EndpointMethod.PATCH,
         controllerName: 'EmailConfigsController',
         actionName: 'update',
         description: 'Email konfigürasyonunu güncelle',
+        category: EndpointCategory.EMAIL_CONFIG_MANAGEMENT,
+        requiresAuth: true
+      },
+      {
+        path: '/api/platform-admin/email-configs/:id/set-active',
+        method: EndpointMethod.PATCH,
+        controllerName: 'EmailConfigsController',
+        actionName: 'setActive',
+        description: 'Email konfigürasyonunu aktif yap',
         category: EndpointCategory.EMAIL_CONFIG_MANAGEMENT,
         requiresAuth: true
       },
