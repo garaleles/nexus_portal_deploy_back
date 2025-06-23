@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { HttpModule } from '@nestjs/axios';
 import { TenantsService } from './tenants.service';
 import { TenantsController } from './tenants.controller';
 import { Tenant } from './entities/tenant.entity';
@@ -13,6 +14,7 @@ import { RolePermissionsModule } from '../role-permissions/role-permissions.modu
 @Module({
   imports: [
     TypeOrmModule.forFeature([Tenant, TenantMetadata]),
+    HttpModule,
     SubscriptionPlansModule,
     EmailConfigsModule,
     RolePermissionsModule

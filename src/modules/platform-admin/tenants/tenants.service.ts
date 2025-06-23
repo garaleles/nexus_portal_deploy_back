@@ -1,6 +1,8 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { HttpService } from '@nestjs/axios';
+import { ConfigService } from '@nestjs/config';
 import { TenantMetadata, TenantStatus } from './entities/tenant-metadata.entity';
 import { Tenant } from './entities/tenant.entity';
 import { CreateTenantDto } from './dto/create-tenant.dto';
@@ -10,6 +12,7 @@ import slugify from 'slugify';
 import { SubscriptionPlansService } from '../subscription-plans/subscription-plans.service';
 import { KeycloakService } from '../../../core/auth/services/keycloak.service';
 import { EmailNotificationService, TenantWelcomeEmailData } from '../../../shared/services/email-notification.service';
+import { firstValueFrom } from 'rxjs';
 
 @Injectable()
 export class TenantsService {
@@ -23,6 +26,8 @@ export class TenantsService {
     private subscriptionPlansService: SubscriptionPlansService,
     private keycloakService: KeycloakService,
     private emailNotificationService: EmailNotificationService,
+    private httpService: HttpService,
+    private configService: ConfigService,
   ) { }
 
   /**
@@ -162,6 +167,11 @@ export class TenantsService {
     this.logger.log(`🏗️ TENANT CREATE - Welcome email gönderiliyor...`);
     await this.sendWelcomeEmail(savedTenant, createTenantDto);
     this.logger.log(`🏗️ TENANT CREATE - Welcome email süreci tamamlandı.`);
+
+    // B2B'ye sync eventi gönder
+    this.logger.log(`🏗️ TENANT CREATE - B2B sync gönderiliyor...`);
+    await this.notifyB2BAboutNewTenant(savedTenant);
+    this.logger.log(`🏗️ TENANT CREATE - B2B sync tamamlandı.`);
 
     this.logger.log(`🏗️ TENANT CREATE - Tenant oluşturma tamamlandı: ${savedTenant.id}`);
     return savedTenant;
@@ -534,5 +544,62 @@ export class TenantsService {
 
     // Düzeltmeden sonra durumu tekrar kontrol et
     return this.keycloakService.debugUserStatus(tenant.keycloakId);
+  }
+
+  /**
+   * B2B'ye yeni tenant hakkında bildirim gönderir
+   */
+  private async notifyB2BAboutNewTenant(tenant: Tenant): Promise<void> {
+    try {
+      const b2bUrl = this.configService.get<string>('B2B_ORDER_MANAGEMENT_URL');
+
+      if (!b2bUrl) {
+        this.logger.warn('B2B_ORDER_MANAGEMENT_URL yapılandırılmamış, sync atlanıyor');
+        return;
+      }
+
+      const syncUrl = `${b2bUrl}/api/sso/sync-tenant/${tenant.id}`;
+
+      const syncData = {
+        tenant: {
+          id: tenant.id,
+          keycloak_user_id: tenant.keycloakId,
+          name: tenant.name,
+          slug: tenant.slug,
+          email: tenant.metadata?.email,
+          company_name: tenant.metadata?.companyName,
+          subscription_status: tenant.metadata?.status,
+          subscription_package: tenant.metadata?.subscriptionPlan?.name,
+          subscription_plan_id: tenant.metadata?.subscriptionPlanId,
+          created_at: tenant.createdAt,
+          updated_at: tenant.updatedAt,
+          status: tenant.status,
+          database_schema: tenant.databaseSchema,
+          domain: tenant.domain,
+          subdomain: tenant.subdomain,
+        }
+      };
+
+      this.logger.log(`B2B sync isteği gönderiliyor: ${syncUrl}`);
+      this.logger.log(`B2B sync data:`, JSON.stringify(syncData, null, 2));
+
+      const response = await firstValueFrom(
+        this.httpService.post(syncUrl, syncData, {
+          timeout: 10000, // 10 saniye timeout
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        })
+      );
+
+      this.logger.log(`B2B sync başarılı: ${tenant.id}`, response.data);
+    } catch (error) {
+      this.logger.error(`B2B sync hatası: ${tenant.id}`, error.message);
+      // Hata olsa da tenant oluşturma devam etsin
+      if (error.response) {
+        this.logger.error(`B2B sync response status: ${error.response.status}`);
+        this.logger.error(`B2B sync response data:`, error.response.data);
+      }
+    }
   }
 }

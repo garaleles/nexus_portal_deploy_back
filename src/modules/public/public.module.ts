@@ -8,6 +8,7 @@ import { PublicCompanyInfoController } from './public-company-info.controller';
 import { PublicIndustriesController } from './public-industries.controller';
 import { PublicTenantMetadataController } from './public-tenant-metadata.controller';
 import { PublicContactMessagesController } from './public-contact-messages.controller';
+import { PublicTenantsController } from './public-tenants.controller';
 import { PublicTenantAuthService } from './public-tenant-auth.service';
 import { PublicOrdersService } from './public-orders.service';
 import { ProductsModule } from '../platform-admin/products/products.module';
@@ -48,7 +49,8 @@ import { KeycloakService } from '../../core/auth/services/keycloak.service';
     PublicOrdersController,
     PublicCompanyInfoController,
     PublicIndustriesController,
-    PublicContactMessagesController
+    PublicContactMessagesController,
+    PublicTenantsController
   ],
   providers: [
     PublicTenantAuthService,
